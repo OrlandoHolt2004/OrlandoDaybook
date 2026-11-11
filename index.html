@@ -1,0 +1,1927 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Daybook</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#EDF0F2">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Daybook">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gloock&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<style>
+/* Layout: one household ledger with four tabs; each tab is an index-card catalogue — a list on one side, the open record on the other. */
+:root {
+  --paper: #EDF0F2; --card: #FBFCFC; --ink: #18212B; --muted: #5B6875; --rule: #D3DAE0;
+  --stamp: #3346B8; --stamp-soft: #E3E7F8; --mark: #FFE9A8; --danger: #B3261E; --good: #2F7A4F; --good-soft: #DDEFE3;
+  --f-display: "Gloock", Georgia, "Times New Roman", serif;
+  --f-read: "Source Serif 4", Georgia, serif;
+  --f-ui: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #12161B; --card: #1A2028; --ink: #E4E9EE; --muted: #94A1AE; --rule: #2B333D;
+  --stamp: #8C9BFF; --stamp-soft: #232B4A; --mark: #5A4A12; --danger: #F2867C; --good: #6BCB8E; --good-soft: #1D3527; color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --paper: #12161B; --card: #1A2028; --ink: #E4E9EE; --muted: #94A1AE; --rule: #2B333D;
+  --stamp: #8C9BFF; --stamp-soft: #232B4A; --mark: #5A4A12; --danger: #F2867C; --good: #6BCB8E; --good-soft: #1D3527; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--paper); color: var(--ink); font-family: var(--f-ui); font-size: 15px; line-height: 1.5; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--paper); }
+button, input, textarea, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--stamp); outline-offset: 2px; }
+.gutter { max-width: 1120px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+
+/* Top bar */
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--paper); border-bottom: 1px solid var(--rule); }
+.top .gutter { display: flex; align-items: center; gap: 18px; padding-block: 12px; flex-wrap: wrap; }
+h1 { font-family: var(--f-display); font-weight: 400; font-size: 1.7rem; line-height: 1; margin: 0; }
+.tabs { display: flex; gap: 2px; background: var(--card); border: 1px solid var(--rule); border-radius: 9px; padding: 3px; overflow-x: auto; max-width: 100%; }
+.tab { border: 0; background: transparent; padding: 7px 14px; border-radius: 6px; cursor: pointer; font-weight: 500; color: var(--muted); white-space: nowrap; }
+.tab:hover { color: var(--ink); }
+.tab[aria-selected="true"] { background: var(--stamp); color: var(--card); }
+.today { margin-left: auto; font-family: var(--f-mono); font-size: .76rem; letter-spacing: .08em; color: var(--muted); text-transform: uppercase; }
+main.gutter { padding-block: 24px 64px; }
+
+/* Shared atoms */
+.btn { border: 1px solid var(--rule); background: var(--card); border-radius: 7px; padding: 8px 14px; cursor: pointer; font-weight: 500; font-size: .9rem; }
+.btn:hover { border-color: var(--muted); }
+.btn.primary { background: var(--stamp); border-color: var(--stamp); color: var(--card); }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.ghost { background: transparent; border-color: transparent; color: var(--muted); padding: 6px 8px; }
+.btn.ghost:hover { color: var(--ink); background: var(--stamp-soft); }
+.btn.danger { color: var(--danger); }
+.btn.danger.armed { background: var(--danger); border-color: var(--danger); color: var(--card); }
+.btn:disabled { opacity: .55; cursor: default; }
+.eyebrow { font-family: var(--f-mono); font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 0; }
+h2 { font-family: var(--f-display); font-weight: 400; font-size: 1.8rem; line-height: 1.1; margin: 0; text-wrap: balance; }
+h3 { font-family: var(--f-display); font-weight: 400; font-size: 1.3rem; line-height: 1.15; margin: 0; }
+.by { font-family: var(--f-read); font-style: italic; color: var(--muted); font-size: 1.02rem; }
+.field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.field label, .field .lbl { font-size: .78rem; color: var(--muted); font-weight: 500; }
+.field input, .field textarea, .field select { border: 1px solid var(--rule); background: var(--paper); border-radius: 6px; padding: 8px 10px; width: 100%; }
+.field input:focus, .field textarea:focus, .field select:focus { border-color: var(--stamp); outline: none; }
+.field textarea { font-family: var(--f-read); font-size: 1rem; line-height: 1.55; resize: vertical; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.panel { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.box { background: var(--card); border: 1px solid var(--rule); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.empty { border: 1px dashed var(--rule); border-radius: 10px; padding: 24px 20px; display: flex; flex-direction: column; gap: 8px; color: var(--muted); }
+.empty h3 { color: var(--ink); }
+.empty p { margin: 0; max-width: 56ch; }
+.title-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.chip { font-family: var(--f-mono); font-size: .74rem; background: var(--stamp-soft); color: var(--stamp); border: 0; border-radius: 999px; padding: 2px 9px; cursor: pointer; }
+.chip:hover { text-decoration: underline; }
+.toggle { border: 1px solid var(--rule); background: var(--card); border-radius: 999px; padding: 6px 12px; cursor: pointer; font-size: .88rem; }
+.toggle[aria-pressed="true"] { background: var(--stamp-soft); border-color: var(--stamp); color: var(--stamp); font-weight: 500; }
+mark { background: var(--mark); color: inherit; border-radius: 2px; padding: 0 1px; }
+.thinking { display: flex; align-items: center; gap: 10px; color: var(--muted); }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--stamp); animation: pulse 1.1s ease-in-out infinite; flex: none; }
+@keyframes pulse { 50% { opacity: .25; } }
+@media (prefers-reduced-motion: reduce) { .dot { animation: none; } }
+.toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--paper); padding: 9px 16px; border-radius: 8px; font-size: .88rem; max-width: calc(100% - 32px); z-index: 20; }
+.stamp { font-family: var(--f-mono); font-size: .68rem; letter-spacing: .08em; color: var(--stamp); border: 1.5px solid var(--stamp); border-radius: 3px; padding: 1px 6px; transform: rotate(-2deg); opacity: .85; white-space: nowrap; }
+
+/* Two-column catalogue */
+.layout { display: grid; grid-template-columns: 270px minmax(0, 1fr); gap: 28px; align-items: start; }
+.side { display: flex; flex-direction: column; gap: 14px; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 84px); }
+.side-head { display: flex; justify-content: space-between; align-items: center; }
+.list { display: flex; flex-direction: column; gap: 2px; list-style: none; margin: 0; padding: 0; }
+.item { width: 100%; text-align: left; background: transparent; border: 0; border-left: 2px solid transparent; padding: 8px 10px; cursor: pointer; display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 1px 10px; border-radius: 0 6px 6px 0; }
+.item:hover { background: var(--card); }
+.item[aria-current="true"] { background: var(--card); border-left-color: var(--stamp); }
+.item .t { font-family: var(--f-read); font-weight: 600; font-size: .97rem; line-height: 1.25; overflow-wrap: anywhere; }
+.item .a { grid-column: 1; font-size: .8rem; color: var(--muted); }
+.item .n { grid-column: 2; grid-row: 1 / span 2; align-self: center; font-family: var(--f-mono); font-size: .78rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.group-label { font-family: var(--f-mono); font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); padding: 10px 10px 2px; }
+
+/* Ask bar */
+.ask { display: flex; gap: 8px; background: var(--card); border: 1px solid var(--rule); border-radius: 10px; padding: 6px; }
+.ask input { flex: 1; min-width: 0; border: 0; background: transparent; padding: 10px; font-family: var(--f-read); font-size: 1.05rem; }
+.ask input:focus { outline: none; }
+.ask:focus-within { border-color: var(--stamp); }
+.hint { font-size: .82rem; color: var(--muted); margin: 0; }
+
+/* Note cards */
+.cards { display: flex; flex-direction: column; gap: 12px; list-style: none; margin: 0; padding: 0; }
+.note { background: var(--card); border: 1px solid var(--rule); border-radius: 4px; padding: 14px 16px 12px; display: flex; flex-direction: column; gap: 8px; }
+.note-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.note-head .stamp { margin-left: auto; }
+.ref { font-family: var(--f-mono); font-size: .82rem; color: var(--ink); font-weight: 500; font-variant-numeric: tabular-nums; }
+.src { font-family: var(--f-read); font-size: .9rem; color: var(--muted); background: none; border: 0; padding: 0; cursor: pointer; text-align: left; }
+.src:hover { color: var(--stamp); text-decoration: underline; }
+.src b { font-weight: 600; color: var(--ink); }
+.note-text { font-family: var(--f-read); font-size: 1.04rem; line-height: 1.6; margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.note-foot { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.actions { margin-left: auto; display: flex; gap: 2px; }
+.why { font-size: .86rem; color: var(--muted); border-top: 1px dashed var(--rule); padding-top: 8px; margin: 0; }
+.answer p { font-family: var(--f-read); font-size: 1.05rem; line-height: 1.6; margin: 0; max-width: 68ch; }
+.composer-meta { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) auto; gap: 10px; align-items: end; }
+
+/* Meals */
+.meal { background: var(--card); border: 1px solid var(--rule); border-radius: 4px; padding: 14px 16px; display: grid; grid-template-columns: 74px minmax(0, 1fr); gap: 4px 16px; }
+.meal-date { grid-row: 1 / span 4; display: flex; flex-direction: column; align-items: center; border-right: 1px solid var(--rule); padding-right: 14px; font-variant-numeric: tabular-nums; }
+.meal-date .d { font-family: var(--f-display); font-size: 1.9rem; line-height: 1; }
+.meal-date .m { font-family: var(--f-mono); font-size: .7rem; letter-spacing: .1em; color: var(--muted); }
+.meal-guests { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.meal-guests .occ { font-family: var(--f-read); font-style: italic; color: var(--muted); margin-right: 4px; }
+.menu { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 1px; font-family: var(--f-read); }
+.menu li::before { content: "— "; color: var(--muted); }
+.went { font-family: var(--f-read); color: var(--ink); margin: 4px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: .97rem; }
+.went::before { content: "How it went: "; font-family: var(--f-ui); font-size: .78rem; color: var(--muted); font-weight: 500; }
+.stars { font-size: 1rem; letter-spacing: 2px; color: var(--stamp); }
+.star-input { display: flex; gap: 4px; }
+.star-input button { border: 0; background: none; font-size: 1.3rem; cursor: pointer; color: var(--rule); padding: 0 2px; line-height: 1; }
+.star-input button.on { color: var(--stamp); }
+.guest-btn .a { font-family: var(--f-mono); font-size: .74rem; }
+.last-served { background: var(--stamp-soft); border-radius: 8px; padding: 12px 14px; }
+.last-served p { margin: 0; font-family: var(--f-read); }
+
+/* Fitness */
+.plan-days { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.day { background: var(--card); border: 1px solid var(--rule); border-radius: 6px; padding: 14px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.day h4 { margin: 0; font-family: var(--f-read); font-size: 1.05rem; font-weight: 600; }
+.ex { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.ex li { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 0 10px; padding: 6px 0; border-top: 1px solid var(--rule); }
+.ex li:first-child { border-top: 0; }
+.ex .nm { font-weight: 500; }
+.ex .rx { font-family: var(--f-mono); font-size: .8rem; color: var(--stamp); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ex .tip { grid-column: 1 / -1; font-size: .82rem; color: var(--muted); }
+.templates { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+.tpl { background: var(--card); border: 1px solid var(--rule); border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 6px; text-align: left; cursor: pointer; }
+.tpl:hover { border-color: var(--stamp); }
+.tpl .t { font-family: var(--f-read); font-weight: 600; font-size: 1.02rem; }
+.tpl p { margin: 0; font-size: .87rem; color: var(--muted); }
+.badges { display: flex; gap: 6px; flex-wrap: wrap; }
+.badge { font-family: var(--f-mono); font-size: .68rem; letter-spacing: .04em; border-radius: 4px; padding: 1px 6px; background: var(--paper); color: var(--muted); border: 1px solid var(--rule); }
+.badge.fit { background: var(--good-soft); color: var(--good); border-color: transparent; }
+.tip-list { margin: 0; padding-left: 18px; color: var(--muted); font-size: .9rem; display: flex; flex-direction: column; gap: 2px; }
+
+/* Habits */
+.habit { background: var(--card); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 16px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px 16px; align-items: center; }
+.habit .name { font-family: var(--f-read); font-weight: 600; font-size: 1.08rem; overflow-wrap: anywhere; }
+.habit .sub { font-size: .82rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.week { display: grid; grid-template-columns: repeat(7, 40px); gap: 6px; }
+.daybtn { display: flex; flex-direction: column; align-items: center; gap: 3px; background: none; border: 0; padding: 0; cursor: pointer; }
+.daybtn .lbl { font-family: var(--f-mono); font-size: .64rem; color: var(--muted); letter-spacing: .04em; }
+.daybtn .sq { width: 34px; height: 34px; border-radius: 8px; border: 1.5px solid var(--rule); display: grid; place-items: center; font-size: .95rem; color: transparent; background: var(--paper); }
+.daybtn.is-today .sq { border-color: var(--stamp); }
+.daybtn.done .sq { background: var(--good); border-color: var(--good); color: var(--card); }
+.daybtn:hover .sq { border-color: var(--good); }
+.strip { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(30, minmax(0, 1fr)); gap: 2px; }
+.strip span { height: 6px; border-radius: 2px; background: var(--rule); }
+.strip span.on { background: var(--good); }
+.habit-foot { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.streak { font-family: var(--f-mono); font-size: .8rem; color: var(--good); font-weight: 500; }
+.summary-bar { display: flex; gap: 24px; flex-wrap: wrap; align-items: baseline; }
+.big { font-family: var(--f-display); font-size: 2.2rem; line-height: 1; font-variant-numeric: tabular-nums; }
+
+@media (max-width: 820px) {
+  .layout { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  .side { position: static; }
+  .today { display: none; }
+}
+@media (max-width: 560px) {
+  .grid2, .grid3, .composer-meta { grid-template-columns: minmax(0, 1fr); }
+  .habit { grid-template-columns: minmax(0, 1fr); }
+  .week { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  .daybtn .sq { width: 100%; max-width: 38px; aspect-ratio: 1; height: auto; }
+  .meal { grid-template-columns: 56px minmax(0, 1fr); gap: 4px 12px; }
+  .meal-date { padding-right: 10px; }
+  h2 { font-size: 1.5rem; }
+}
+
+/* Additions: Bible reader, hosting calendar */
+:root { --meal: #9A5B13; --meal-soft: #F6EAD8; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --meal: #E0A35C; --meal-soft: #3A2A16; } }
+:root[data-theme="dark"] { --meal: #E0A35C; --meal-soft: #3A2A16; }
+.seg { display: inline-flex; gap: 2px; background: var(--card); border: 1px solid var(--rule); border-radius: 8px; padding: 3px; flex-wrap: wrap; }
+.seg button { border: 0; background: transparent; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-weight: 500; color: var(--muted); font-size: .9rem; }
+.seg button[aria-pressed="true"] { background: var(--stamp-soft); color: var(--stamp); }
+
+.chapters { display: grid; grid-template-columns: repeat(auto-fill, minmax(36px, 1fr)); gap: 4px; }
+.chapters button { border: 1px solid var(--rule); background: var(--card); border-radius: 5px; padding: 5px 0; font-family: var(--f-mono); font-size: .76rem; cursor: pointer; position: relative; font-variant-numeric: tabular-nums; }
+.chapters button:hover { border-color: var(--stamp); }
+.chapters button[aria-current="true"] { background: var(--stamp); border-color: var(--stamp); color: var(--card); }
+.chapters button.has::after { content: ""; position: absolute; top: 3px; right: 3px; width: 5px; height: 5px; border-radius: 50%; background: var(--stamp); }
+.chapters button[aria-current="true"].has::after { background: var(--card); }
+.bible-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+.verses { display: flex; flex-direction: column; gap: 1px; max-width: 760px; }
+.verse { border-radius: 8px; }
+.verse.open { background: var(--card); box-shadow: 0 0 0 1px var(--rule); }
+.vbtn { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; gap: 0 8px; width: 100%; text-align: left; background: none; border: 0; padding: 6px 10px 6px 4px; cursor: pointer; border-radius: 8px; align-items: baseline; }
+.vbtn:hover { background: var(--card); }
+.vn { font-family: var(--f-mono); font-size: .74rem; color: var(--stamp); text-align: right; font-variant-numeric: tabular-nums; }
+.vt { font-family: var(--f-read); font-size: 1.1rem; line-height: 1.7; overflow-wrap: anywhere; }
+.vt .sup { color: var(--muted); }
+.vc { font-family: var(--f-mono); font-size: .7rem; background: var(--stamp-soft); color: var(--stamp); border-radius: 999px; padding: 1px 8px; white-space: nowrap; align-self: center; }
+.vnotes { padding: 2px 14px 14px 46px; display: flex; flex-direction: column; gap: 10px; }
+.vnotes .note { border-radius: 6px; background: var(--paper); }
+.who { font-weight: 600; font-size: .88rem; }
+.who.mine { color: var(--stamp); }
+.vform { display: flex; flex-direction: column; gap: 8px; border-top: 1px dashed var(--rule); padding-top: 10px; }
+.vform .composer-meta { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
+.verse-quote { font-family: var(--f-read); font-style: italic; color: var(--muted); margin: 0; font-size: .97rem; border-left: 2px solid var(--rule); padding-left: 10px; }
+.chap-select { display: none; }
+
+.cal { display: flex; flex-direction: column; gap: 10px; }
+.cal-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; }
+.cal-dow { font-family: var(--f-mono); font-size: .68rem; letter-spacing: .08em; color: var(--muted); text-align: center; padding-bottom: 2px; }
+.cal-day { min-height: 78px; background: var(--paper); border: 1px solid transparent; border-radius: 6px; padding: 4px; display: flex; flex-direction: column; gap: 2px; cursor: pointer; text-align: left; min-width: 0; overflow: hidden; }
+.cal-day:hover { border-color: var(--rule); }
+.cal-day.other { opacity: .45; }
+.cal-day.today .num { background: var(--stamp); color: var(--card); border-radius: 4px; padding: 0 4px; }
+.cal-day[aria-pressed="true"] { border-color: var(--stamp); background: var(--card); }
+.cal-day .num { font-family: var(--f-mono); font-size: .74rem; align-self: flex-start; font-variant-numeric: tabular-nums; }
+.pill { font-size: .7rem; line-height: 1.3; border-radius: 3px; padding: 1px 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pill.stay { background: var(--stamp-soft); color: var(--stamp); }
+.pill.meal { background: var(--meal-soft); color: var(--meal); }
+.legend { display: flex; gap: 12px; font-size: .78rem; color: var(--muted); align-items: center; flex-wrap: wrap; }
+.legend .pill { display: inline-block; }
+.day-detail { display: flex; flex-direction: column; gap: 10px; border-top: 1px solid var(--rule); padding-top: 12px; }
+.entry-type { font-family: var(--f-mono); font-size: .66rem; letter-spacing: .08em; text-transform: uppercase; border-radius: 3px; padding: 1px 6px; }
+.entry-type.stay { background: var(--stamp-soft); color: var(--stamp); }
+.entry-type.meal { background: var(--meal-soft); color: var(--meal); }
+.soon { font-family: var(--f-mono); font-size: .66rem; letter-spacing: .08em; text-transform: uppercase; color: var(--good); border: 1px solid var(--good); border-radius: 3px; padding: 0 5px; }
+.went.tea::before { content: "For tea: "; }
+.went.purpose::before { content: "Purpose: "; }
+
+@media (max-width: 820px) {
+  .chapters { display: none; }
+  .chap-select { display: flex; }
+}
+@media (max-width: 560px) {
+  .vnotes { padding-left: 14px; }
+  .vform .composer-meta { grid-template-columns: minmax(0, 1fr); }
+  .cal-day { min-height: 48px; padding: 3px; }
+  .pill { font-size: 0; padding: 0; height: 5px; border-radius: 2px; }
+  .pill.stay { background: var(--stamp); }
+  .pill.meal { background: var(--meal); }
+  .legend .pill { font-size: .7rem; height: auto; padding: 1px 4px; }
+  .legend .pill.stay { background: var(--stamp-soft); } .legend .pill.meal { background: var(--meal-soft); }
+}
+.entry { background: var(--card); border: 1px solid var(--rule); border-radius: 6px; }
+.entry[open] { box-shadow: 0 1px 0 var(--rule); }
+.entry-sum { list-style: none; display: flex; align-items: center; gap: 8px 10px; flex-wrap: wrap; padding: 10px 14px; cursor: pointer; }
+.entry-sum::-webkit-details-marker { display: none; }
+.entry-sum::before { content: "›"; color: var(--muted); font-size: 1.1rem; line-height: 1; transition: transform .15s; display: inline-block; width: 10px; }
+.entry[open] > .entry-sum::before { transform: rotate(90deg); }
+@media (prefers-reduced-motion: reduce) { .entry-sum::before { transition: none; } }
+.entry-sum .ed { font-family: var(--f-mono); font-size: .8rem; font-variant-numeric: tabular-nums; min-width: 9.5em; }
+.entry-sum .ew { font-family: var(--f-read); font-weight: 600; min-width: 0; overflow-wrap: anywhere; flex: 1 1 12em; }
+.entry-sum .occ { font-family: var(--f-read); font-style: italic; color: var(--muted); font-size: .9rem; }
+.entry-body { padding: 0 14px 12px 34px; display: flex; flex-direction: column; gap: 4px; }
+.entry-type.out, .pill.meal.out { background: var(--good-soft); color: var(--good); }
+@media (max-width: 560px) { .pill.meal.out { background: var(--good); } .legend .pill.meal.out { background: var(--good-soft); } .entry-body { padding-left: 14px; } .entry-sum .ed { min-width: 0; } }
+
+/* Training */
+.wk-card { background: var(--card); border: 1px solid var(--rule); border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.log-ex { border-top: 1px solid var(--rule); padding-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+.log-ex:first-of-type { border-top: 0; padding-top: 0; }
+.log-ex-head { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; justify-content: space-between; }
+.log-ex-head .nm { font-family: var(--f-read); font-weight: 600; font-size: 1.05rem; }
+.prev { font-size: .82rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.prev b { color: var(--good); font-weight: 500; }
+.sets { display: grid; grid-template-columns: 28px minmax(0, 110px) minmax(0, 90px) auto; gap: 6px 8px; align-items: center; }
+.sets .sn { font-family: var(--f-mono); font-size: .76rem; color: var(--muted); text-align: right; }
+.sets input { border: 1px solid var(--rule); background: var(--paper); border-radius: 6px; padding: 7px 8px; width: 100%; font-variant-numeric: tabular-nums; }
+.sets input:focus { border-color: var(--stamp); outline: none; }
+.sets .hd { font-size: .72rem; color: var(--muted); }
+.build-row { display: grid; grid-template-columns: minmax(0, 2fr) 70px 90px 90px auto; gap: 6px; align-items: end; }
+.pb-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.pb-table th { text-align: left; font-family: var(--f-mono); font-size: .68rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 500; padding: 6px 10px; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+.pb-table td { padding: 10px; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+.pb-table td.nm { white-space: normal; font-family: var(--f-read); font-weight: 600; }
+.pb-table tr.sel td, .pb-table tbody tr:hover td { background: var(--stamp-soft); }
+.pb-table tbody tr { cursor: pointer; }
+.pb { font-family: var(--f-mono); font-size: .64rem; letter-spacing: .08em; color: var(--good); border: 1px solid var(--good); border-radius: 3px; padding: 0 4px; margin-left: 4px; }
+.scroll-x { overflow-x: auto; }
+.chart svg { width: 100%; height: auto; display: block; }
+.hist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.hist li { display: grid; grid-template-columns: 9.5em minmax(0, 1fr); gap: 10px; padding: 7px 0; border-top: 1px solid var(--rule); font-variant-numeric: tabular-nums; font-size: .9rem; }
+.hist li .d { font-family: var(--f-mono); font-size: .8rem; color: var(--muted); }
+.suggest { background: var(--good-soft); color: var(--ink); border-radius: 8px; padding: 10px 14px; margin: 0; }
+.suggest b { color: var(--good); }
+@media (max-width: 560px) { .build-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr); } .build-row .field:first-child { grid-column: 1 / -1; } .hist li { grid-template-columns: 1fr; gap: 2px; } }
+
+.howto { grid-column: 1 / -1; font-size: .86rem; }
+.howto > summary { cursor: pointer; color: var(--stamp); font-weight: 500; list-style: none; display: inline-flex; gap: 6px; align-items: baseline; padding: 2px 0; }
+.howto > summary::-webkit-details-marker { display: none; }
+.howto > summary::before { content: "+"; font-family: var(--f-mono); width: 10px; }
+.howto[open] > summary::before { content: "–"; }
+.howto-body { display: flex; flex-direction: column; gap: 4px; padding: 4px 0 6px 16px; color: var(--ink); }
+.howto-body p { margin: 0; line-height: 1.5; max-width: 62ch; }
+.howto-tip { color: var(--muted); }
+.howto-tip b { color: var(--good); font-weight: 600; }
+.eq-picker { font-size: .95rem; }
+.eq-picker > summary { font-weight: 600; color: var(--ink); font-size: .95rem; }
+.eq-picker > summary .hint { font-weight: 400; }
+
+.vc.min { background: var(--good-soft); color: var(--good); }
+.minlinks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font-size: .9rem; }
+.minlinks .src { font-size: .92rem; }
+.meeting .entry-sum .ed { min-width: 0; color: var(--muted); }
+.meeting .entry-sum .ew { flex: 0 1 auto; }
+</style>
+
+<div class="top">
+  <div class="gutter">
+    <h1>Daybook</h1>
+    <nav class="tabs" role="tablist" aria-label="Sections">
+      <button class="tab" role="tab" data-tab="reading" type="button">Reading</button>
+      <button class="tab" role="tab" data-tab="hosting" type="button">Entertaining</button>
+      <button class="tab" role="tab" data-tab="fitness" type="button">Fitness</button>
+      <button class="tab" role="tab" data-tab="backup" type="button">Backup</button>
+    </nav>
+    <span class="today" id="today"></span>
+  </div>
+</div>
+<main class="gutter" id="view" aria-live="polite"></main>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(() => {
+/* ================= Core ================= */
+const S = { tab: 'reading', ready: false, unavailable: false,
+  sources: [], notes: [], meals: [], stays: [], workouts: [], sessions: [], guides: [], meetings: [], fitness: null, got: {} };
+let db = null, sample = null;
+const $ = id => document.getElementById(id);
+const el = (tag, attrs = {}, ...kids) => {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v == null || v === false) continue;
+    if (k === 'class') n.className = v;
+    else if (k.startsWith('on')) n.addEventListener(k.slice(2), v);
+    else if (k === 'text') n.textContent = v;
+    else if (k === 'value') n.value = v;
+    else n.setAttribute(k, v === true ? '' : v);
+  }
+  for (const c of kids.flat(3)) if (c != null && c !== false) n.append(c instanceof Node ? c : String(c));
+  return n;
+};
+let toastT;
+const toast = msg => { const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 2600); };
+const writeError = e => e?.code === 'quota_exceeded' ? 'Your Daybook is full. Remove some old entries to add more.'
+  : e?.code === 'invalid_argument' ? 'Only the Daybook’s owner can change it.' : 'Couldn’t save that. Check your connection and try again.';
+const MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+const MONTHS_L = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DOW = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+const DOW_L = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const iso = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const fromIso = s => { const [y, m, d] = String(s).split('-').map(Number); return new Date(y, (m || 1) - 1, d || 1); };
+const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+const todayIso = () => iso(new Date());
+const stampDate = ms => { const d = new Date(ms || Date.now()); return `${String(d.getDate()).padStart(2,'0')} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`; };
+const niceDate = s => { if (!s) return ''; const d = fromIso(s); return `${d.getDate()} ${MONTHS_L[d.getMonth()]} ${d.getFullYear()}`; };
+const dayDate = s => { const d = fromIso(s); return `${DOW_L[d.getDay()]} ${d.getDate()} ${MONTHS_L[d.getMonth()]}`; };
+const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
+const splitList = s => [...new Set(String(s || '').split(/[,\n]/).map(t => t.trim()).filter(Boolean))];
+const parseTags = s => [...new Set(String(s || '').split(',').map(t => t.trim().replace(/^#/, '').toLowerCase()).filter(Boolean))];
+const byNew = (a, b) => (b.createdAt || 0) - (a.createdAt || 0);
+const byOld = (a, b) => (a.createdAt || 0) - (b.createdAt || 0);
+function armBtn(label, armedLabel, onConfirm) {
+  const b = el('button', { class: 'btn ghost danger', type: 'button', text: label });
+  b.addEventListener('click', e => {
+    e.stopPropagation();
+    if (b.dataset.armed) { onConfirm(); return; }
+    b.dataset.armed = '1'; b.classList.add('armed'); b.textContent = armedLabel;
+    setTimeout(() => { if (b.isConnected) { delete b.dataset.armed; b.classList.remove('armed'); b.textContent = label; } }, 4000);
+  });
+  return b;
+}
+function highlight(text, words) {
+  const frag = document.createDocumentFragment();
+  if (!words || !words.length) { frag.append(text); return frag; }
+  const re = new RegExp('(' + words.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')', 'gi');
+  let last = 0;
+  text.replace(re, (m, _g, i) => { frag.append(text.slice(last, i), el('mark', { text: m })); last = i + m.length; return m; });
+  frag.append(text.slice(last)); return frag;
+}
+const STOP = new Set('the and for with that this what from about have where when which notes note find show anything something said says say on of in to my me any all are was were how why who did does'.split(' '));
+const queryWords = q => [...new Set(q.toLowerCase().split(/[^\p{L}\p{N}':]+/u).filter(w => w.length > 2 && !STOP.has(w)))];
+
+/* ================= Bible text ================= */
+const BIBLE_IDX = [["Genesis",[31,25,24,26,32,22,24,22,29,32,32,20,18,24,21,16,27,33,38,18,34,24,20,67,34,35,46,22,35,43,55,32,20,31,29,43,36,30,23,23,57,38,34,34,28,34,31,22,33,26]],["Exodus",[22,25,22,31,23,30,25,32,35,29,10,51,22,31,27,36,16,27,25,26,36,31,33,18,40,37,21,43,46,38,18,35,23,35,35,38,29,31,43,38]],["Leviticus",[17,16,17,35,19,30,38,36,24,20,47,8,59,57,33,34,16,30,37,27,24,33,44,23,55,46,34]],["Numbers",[54,34,51,49,31,27,89,26,23,36,35,16,33,45,41,50,13,32,22,29,35,41,30,25,18,65,23,31,40,16,54,42,56,29,34,13]],["Deuteronomy",[46,37,29,49,33,25,26,20,29,22,32,32,18,29,23,22,20,22,21,20,23,30,25,22,19,19,26,68,29,20,30,52,29,12]],["Joshua",[18,24,17,24,15,27,26,35,27,43,23,24,33,15,63,10,18,28,51,9,45,34,16,33]],["Judges",[36,23,31,24,31,40,25,35,57,18,40,15,25,20,20,31,13,31,30,48,25]],["Ruth",[22,23,18,22]],["1 Samuel",[28,36,21,22,12,21,17,22,27,27,15,25,23,52,35,23,58,30,24,42,15,23,29,22,44,25,12,25,11,31,13]],["2 Samuel",[27,32,39,12,25,23,29,18,13,19,27,31,39,33,37,23,29,33,43,26,22,51,39,25]],["1 Kings",[53,46,28,34,18,38,51,66,28,29,43,33,34,31,34,34,24,46,21,43,29,53]],["2 Kings",[18,25,27,44,27,33,20,29,37,36,21,21,25,29,38,20,41,37,37,21,26,20,37,20,30]],["1 Chronicles",[54,55,24,43,26,81,40,40,44,14,47,40,14,17,29,43,27,17,19,8,30,19,32,31,31,32,34,21,30]],["2 Chronicles",[17,18,17,22,14,42,22,18,31,19,23,16,22,15,19,14,19,34,11,37,20,12,21,27,28,23,9,27,36,27,21,33,25,33,27,23]],["Ezra",[11,70,13,24,17,22,28,36,15,44]],["Nehemiah",[11,20,32,23,19,19,73,18,38,39,36,47,31]],["Esther",[22,23,15,17,14,14,10,17,32,3]],["Job",[22,13,26,21,27,30,21,22,35,22,20,25,28,22,35,22,16,21,29,29,34,30,17,25,6,14,23,28,25,31,40,22,33,37,16,33,24,41,30,24,34,17]],["Psalms",[6,12,8,8,12,10,17,9,20,18,7,8,6,7,5,11,15,50,14,9,13,31,6,10,22,12,14,9,11,12,24,11,22,22,28,12,40,22,13,17,13,11,5,26,17,11,9,14,20,23,19,9,6,7,23,13,11,11,17,12,8,12,11,10,13,20,7,35,36,5,24,20,28,23,10,12,20,72,13,19,16,8,18,12,13,17,7,18,52,17,16,15,5,23,11,13,12,9,9,5,8,28,22,35,45,48,43,13,31,7,10,10,9,8,18,19,2,29,176,7,8,9,4,8,5,6,5,6,8,8,3,18,3,3,21,26,9,8,24,13,10,7,12,15,21,10,20,14,9,6]],["Proverbs",[33,22,35,27,23,35,27,36,18,32,31,28,25,35,33,33,28,24,29,30,31,29,35,34,28,28,27,28,27,33,31]],["Ecclesiastes",[18,26,22,16,20,12,29,17,18,20,10,14]],["Song of Songs",[17,17,11,16,16,13,13,14]],["Isaiah",[31,22,26,6,30,13,25,22,21,34,16,6,22,32,9,14,14,7,25,6,17,25,18,23,12,21,13,29,24,33,9,20,24,17,10,22,38,22,8,31,29,25,28,28,25,13,15,22,26,11,23,15,12,17,13,12,21,14,21,22,11,12,19,12,25,24]],["Jeremiah",[19,37,25,31,31,30,34,22,26,25,23,17,27,22,21,21,27,23,15,18,14,30,40,10,38,24,22,17,32,24,40,44,26,22,19,32,21,28,18,16,18,22,13,30,5,28,7,47,39,46,64,34]],["Lamentations",[22,22,66,22,22]],["Ezekiel",[28,10,27,17,17,14,27,18,11,22,25,28,23,23,8,63,24,32,14,49,32,31,49,27,17,21,36,26,21,26,18,32,33,31,15,38,28,23,29,49,26,20,27,31,25,24,23,35]],["Daniel",[21,49,30,37,31,28,28,27,27,21,45,13]],["Hosea",[11,23,5,19,15,11,16,14,17,15,12,14,16,9]],["Joel",[20,32,21]],["Amos",[15,16,15,13,27,14,17,14,15]],["Obadiah",[21]],["Jonah",[17,10,10,11]],["Micah",[16,13,12,13,15,16,20]],["Nahum",[15,13,19]],["Habakkuk",[17,20,19]],["Zephaniah",[18,15,20]],["Haggai",[15,23]],["Zechariah",[21,13,10,14,11,15,14,23,17,12,17,14,9,21]],["Malachi",[14,17,18,6]],["Matthew",[25,23,17,25,48,34,29,34,38,42,30,50,58,36,39,28,27,35,30,34,46,46,39,51,46,75,66,20]],["Mark",[45,28,35,41,43,56,37,38,50,52,33,44,37,72,47,20]],["Luke",[80,52,38,44,39,49,50,56,62,42,54,59,35,35,32,31,37,43,48,47,38,71,56,53]],["John",[51,25,36,54,47,71,53,59,41,42,57,50,38,31,27,33,26,40,42,31,25]],["Acts",[26,47,26,37,42,15,60,40,43,48,30,25,52,28,41,40,34,28,41,38,40,30,35,27,27,32,44,31]],["Romans",[32,29,31,25,21,23,25,39,33,21,36,21,14,23,33,27]],["1 Corinthians",[31,16,23,21,13,20,40,13,27,33,34,31,13,40,58,24]],["2 Corinthians",[24,17,18,18,21,18,16,24,15,18,33,21,14]],["Galatians",[24,21,29,31,26,18]],["Ephesians",[23,22,21,32,33,24]],["Philippians",[30,30,21,23]],["Colossians",[29,23,25,18]],["1 Thessalonians",[10,20,13,18,28]],["2 Thessalonians",[12,17,18]],["1 Timothy",[20,15,16,16,25,21]],["2 Timothy",[18,26,17,22]],["Titus",[16,15,15]],["Philemon",[25]],["Hebrews",[14,18,19,16,14,20,28,13,28,39,40,29,25]],["James",[27,26,18,17,20]],["1 Peter",[25,25,22,19,14]],["2 Peter",[21,22,18]],["1 John",[10,29,24,21,21]],["2 John",[13]],["3 John",[14]],["Jude",[25]],["Revelation",[20,29,22,11,14,17,17,13,21,11,19,17,18,20,8,21,18,24,21,15,27,21]]];
+const BIBLE = BIBLE_IDX.map(x => x[0]);
+const BOOKS = {};
+function loadBook(i) {
+  if (!BOOKS[i]) BOOKS[i] = fetch(`bible-${String(i + 1).padStart(2, '0')}.json`).then(r => { if (!r.ok) throw new Error('load'); return r.json(); })
+    .then(j => (BOOKS[i].data = j.chapters, j.chapters)).catch(e => { delete BOOKS[i]; throw e; });
+  return BOOKS[i];
+}
+const cachedVerse = (b, c, v) => BOOKS[b]?.data?.[c - 1]?.[v - 1] || null;
+const refOf = (b, c, v) => `${BIBLE[b]} ${c}${v ? ':' + v : ''}`;
+const norm = s => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+function parseRef(q) {
+  const m = String(q || '').trim().match(/^((?:[123]|i{1,3})\s*)?([A-Za-z][A-Za-z .]*?)\s*(\d+)?(?:\s*[:.]\s*(\d+))?\s*$/i);
+  if (!m) return null;
+  let pre = (m[1] || '').trim().toLowerCase(); pre = pre === 'i' ? '1' : pre === 'ii' ? '2' : pre === 'iii' ? '3' : pre;
+  const key = norm(pre + m[2]); if (key.length < 3 && !pre && !m[3]) return null;
+  let b = BIBLE.findIndex(x => norm(x) === key);
+  if (b < 0) b = BIBLE.findIndex(x => norm(x).startsWith(key));
+  if (b < 0 && key.startsWith('psalm')) b = 18;
+  if (b < 0 && (key.startsWith('songofsol') || key === 'canticles')) b = 21;
+  if (b < 0 && key.startsWith('revelation')) b = 65;
+  if (b < 0) return null;
+  const c = m[3] ? Math.min(Number(m[3]), BIBLE_IDX[b][1].length) : 0;
+  const v = c && m[4] ? Math.min(Number(m[4]), BIBLE_IDX[b][1][c - 1]) : 0;
+  return { b, c, v };
+}
+// Scripture lists like "Ephesians 4:1-16; Col 2:19, 3:1-4\nJohn 17"
+function parseRanges(str) {
+  const out = []; let lastB = -1, lastC = 0;
+  for (const raw of String(str || '').split(/[;\n]+/)) {
+    for (let part of raw.split(/,(?=\s*(?:[123]\s*)?[A-Za-z])/)) {
+      part = part.trim(); if (!part) continue;
+      let b = lastB, rest = part;
+      const m = part.match(/^((?:[123]|i{1,3})\s*)?([A-Za-z][A-Za-z .]*?)\s*(?=\d)/i);
+      if (m) { const p = parseRef(m[0].trim() + ' 1'); if (!p) continue; b = p.b; rest = part.slice(m[0].length); }
+      if (b < 0) continue;
+      for (const [si, seg] of rest.split(',').entries()) {
+        const x = seg.trim().match(/^(\d+)(?:\s*[:.]\s*(\d+))?(?:\s*[-–]\s*(\d+)(?:\s*[:.]\s*(\d+))?)?/);
+        if (!x) continue;
+        let c1, v1, c2, v2;
+        const solo = !x[2] && (si > 0 || !m) && lastC && out.length && out[out.length - 1].b === b && out[out.length - 1].v1 > 0; // "Romans 8:28, 32" → verse 32 of chapter 8
+        if (solo) { c1 = c2 = lastC; v1 = +x[1]; v2 = x[3] ? +x[3] : v1; }
+        else if (x[2]) { c1 = +x[1]; v1 = +x[2]; if (x[4]) { c2 = +x[3]; v2 = +x[4]; } else if (x[3]) { c2 = c1; v2 = +x[3]; } else { c2 = c1; v2 = v1; } }
+        else { c1 = +x[1]; v1 = 0; c2 = x[3] ? +x[3] : c1; v2 = 0; }
+        const maxC = BIBLE_IDX[b][1].length; if (c1 < 1 || c1 > maxC) continue; c2 = Math.min(Math.max(c2, c1), maxC);
+        out.push({ b, c1, v1, c2, v2 }); lastB = b; lastC = c2;
+      }
+      lastB = b;
+    }
+  }
+  return out;
+}
+const covers = (r, b, c, v) => r.b === b && (c > r.c1 || (c === r.c1 && (!r.v1 || v >= r.v1))) && (c < r.c2 || (c === r.c2 && (!r.v2 || v <= r.v2)));
+const rangeLabel = r => `${BIBLE[r.b]} ${r.c1}${r.v1 ? ':' + r.v1 : ''}${r.c2 !== r.c1 ? '–' + r.c2 + (r.v2 ? ':' + r.v2 : '') : r.v2 && r.v2 !== r.v1 ? '-' + r.v2 : ''}`;
+// Ministry dates call Sunday "Lord's Day"
+const ministryDate = s => { if (!s) return ''; const d = fromIso(s); return `${d.getDay() === 0 ? 'Lord’s Day' : DOW_L[d.getDay()]} ${d.getDate()} ${MONTHS_L[d.getMonth()]} ${d.getFullYear()}`; };
+function verseText(t) {
+  const frag = document.createDocumentFragment(); let last = 0;
+  t.replace(/\[[^\]]*\]/g, (m, i) => { frag.append(t.slice(last, i), el('span', { class: 'sup', title: 'Word supplied by the translator', text: m })); last = i + m.length; return m; });
+  frag.append(t.slice(last)); return frag;
+}
+const isMine = a => !a || /^(me|myself|mine|i)$/i.test(a.trim());
+const authorsUsed = () => [...new Set(S.notes.map(n => n.author).filter(a => a && !isMine(a)))].sort();
+
+/* ================= Shell ================= */
+function showTab(name, push = true) {
+  if (!TABS[name]) name = 'reading';
+  S.tab = name;
+  document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', t.dataset.tab === name ? 'true' : 'false'));
+  try { localStorage.setItem('daybook.tab', name); } catch (e) {}
+  if (push) { try { history.replaceState(null, '', '#' + name); } catch (e) {} }
+  const v = $('view'); v.replaceChildren();
+  if (S.unavailable) { v.append(el('div', { class: 'empty' }, el('h3', { text: 'Your Daybook can’t open here' }), el('p', { text: 'This browser blocked on-device storage. Turn off private browsing and open Daybook again.' }))); return; }
+  if (!S.ready) { v.append(el('div', { class: 'thinking' }, el('span', { class: 'dot' }), 'Opening your Daybook…')); return; }
+  TABS[name].mount(v);
+}
+function dataChanged() { if (S.ready && !S.unavailable) TABS[S.tab].update?.(); }
+function refreshAuthors() { const dl = $('authors'); if (dl) dl.replaceChildren(...['Me', ...authorsUsed()].map(a => el('option', { value: a }))); }
+
+/* ================= EXERCISE GUIDES ================= */
+const EX_GUIDE = {
+  'bodyweight squat': ['Feet shoulder-width, toes slightly out. Sit your hips back and down until thighs are about parallel, then drive up through your whole foot.', 'Keep your chest up and knees tracking over your toes.'],
+  'squat': ['Feet shoulder-width, toes slightly out. Sit your hips back and down until thighs are about parallel, then stand back up.', 'Keep your heels down and your knees pushing out over your toes.'],
+  'incline push-up': ['Hands on a bench, counter or wall a little wider than shoulders. Keep a straight line from head to heels, lower your chest to the edge, then press away.', 'The higher the surface, the easier it is. Go lower as you get stronger.'],
+  'push-up': ['Hands just wider than shoulders, body in a straight line from head to heels. Lower until your chest is a fist from the floor, then press back up.', 'Squeeze your bottom and brace your stomach so your hips don’t sag.'],
+  'knee push-up': ['Like a push-up, but with knees on the floor. Keep a straight line from head to knees, lower your chest, then press up.', 'Put a folded towel under your knees for comfort.'],
+  'diamond push-up': ['A push-up with hands close together under your chest, thumbs and index fingers touching. Lower slowly and press up.', 'Keep elbows tucked in close to your sides — this works the triceps.'],
+  'pike push-up': ['Start in a push-up, then walk your feet in so your hips point up in an upside-down V. Bend your elbows to lower your head toward the floor, then press back.', 'Look at your feet; it keeps your head moving in the right line.'],
+  'glute bridge': ['Lie on your back, knees bent, feet flat. Push through your heels to lift your hips until your body is straight from shoulders to knees, then lower slowly.', 'Squeeze your bottom at the top for a second rather than arching your lower back.'],
+  'hip thrust': ['Upper back against a bench, feet flat, weight across your hips. Drive your hips up until your thighs are level with your body, pause, and lower.', 'Tuck your chin slightly and keep your ribs down so the work stays in your hips.'],
+  'bird dog': ['On hands and knees, reach one arm forward and the opposite leg back until both are level with your body. Hold a moment, return, and switch sides.', 'Move slowly. Imagine a cup of tea balanced on your lower back.'],
+  'dead bug': ['Lie on your back, arms up, knees bent at 90°. Slowly lower one arm behind you and the opposite leg toward the floor, then return and switch.', 'Press your lower back into the floor the whole time.'],
+  'plank': ['Forearms on the floor under your shoulders, body straight from head to heels. Hold, breathing steadily.', 'Squeeze your bottom and pull your belly button in. Stop when your hips start to drop.'],
+  'side plank': ['Lie on your side, forearm under your shoulder. Lift your hips so your body is a straight line, and hold.', 'Bend your bottom knee to make it easier.'],
+  'hollow hold': ['Lie on your back, press your lower back down, then lift your shoulders and legs a little off the floor with arms reaching overhead. Hold.', 'Bend your knees or bring your arms in if your back lifts off the floor.'],
+  'mountain climber': ['From a push-up position, drive one knee toward your chest, then switch legs quickly, like running in place.', 'Keep your hips level and your hands under your shoulders.'],
+  'brisk walk': ['Walk at a pace where you can talk but not sing, swinging your arms naturally.', 'Stand tall and land heel first, rolling through to your toes.'],
+  'warm-up walk': ['Easy walking to raise your heart rate and loosen up before running.', 'Start slow and build to a brisk pace by the end.'],
+  'cool-down walk': ['Easy walking to let your breathing settle after running.', 'Finish with a gentle calf and hip stretch.'],
+  'run / walk intervals': ['Alternate easy jogging with walking for the times given.', 'Run slowly enough to hold a conversation. Speed comes later.'],
+  'reverse lunge': ['Stand tall, step one foot back and lower until both knees are bent about 90°, then push through the front heel to stand. Alternate legs.', 'Keep most of your weight on the front foot.'],
+  'walking lunge': ['Step forward into a lunge, lowering your back knee toward the floor, then step the back foot through into the next lunge.', 'Take a long enough step that your front knee stays over your ankle.'],
+  'split squat': ['Stand in a long stride. Lower your back knee straight down toward the floor, then push back up. Do all reps on one side, then switch.', 'Keep your torso upright and front heel down.'],
+  'bulgarian split squat': ['Rear foot up on a bench behind you. Lower your back knee toward the floor, then drive up through the front heel.', 'Hop your front foot forward until your knee stays roughly over your ankle at the bottom.'],
+  'step-up': ['Place one foot on a sturdy step or bench and push through that heel to stand on it, then step down slowly.', 'Don’t push off the bottom foot. Let the top leg do the work.'],
+  'jump squat': ['Squat down, then jump straight up. Land softly back into the squat and repeat.', 'Land quietly through the balls of your feet with knees bent.'],
+  'sumo squat': ['Wide stance, toes turned out, holding a weight between your legs. Squat straight down, then stand up.', 'Push your knees out over your toes all the way down.'],
+  'goblet squat': ['Hold a dumbbell or kettlebell at your chest with both hands. Squat down between your knees, then stand up.', 'Your elbows should brush the inside of your knees at the bottom.'],
+  'back squat': ['Bar across your upper back in a rack. Brace, sit down and back until your hips are just below your knees, then drive up.', 'Take a big breath and hold it on the way down; breathe out at the top.'],
+  'front squat': ['Bar resting on the front of your shoulders, elbows high. Squat down keeping your chest tall, then stand.', 'Think “elbows up” the whole way to stop the bar rolling forward.'],
+  'leg press': ['Sit in the machine, feet shoulder-width on the plate. Lower the plate until your knees reach about 90°, then press back without locking your knees.', 'Keep your lower back flat against the seat.'],
+  'calf raise': ['Stand on the edge of a step, heels hanging. Rise up onto your toes, pause, and lower your heels below the step.', 'Go slowly at the bottom for a full stretch.'],
+  'hip hinge': ['Hands on hips, soft knees. Push your hips back as your chest tips forward with a flat back, then stand tall by squeezing your bottom.', 'Imagine shutting a car door with your bottom.'],
+  'good morning': ['With hands behind your head or a band over your shoulders, hinge at the hips with a flat back until you feel your hamstrings, then stand up.', 'Knees stay softly bent; the movement is all at the hips.'],
+  'romanian deadlift': ['Hold weights in front of your thighs. Push your hips back and slide the weights down your legs with a flat back until you feel a hamstring stretch, then stand.', 'Keep the weights close to your legs the whole way.'],
+  'single-leg romanian deadlift': ['Standing on one leg, hinge forward as the other leg reaches back, lowering the weight toward the floor, then return to standing.', 'Hold onto a wall with your free hand at first for balance.'],
+  'deadlift': ['Feet hip-width, bar over the middle of your feet. Grip just outside your legs, brace, and stand up by pushing the floor away, keeping the bar close.', 'Keep your back flat. If it rounds, the weight is too heavy.'],
+  'kettlebell deadlift': ['Kettlebell between your feet. Hinge down with a flat back, grip the handle, and stand up tall.', 'Push your hips forward at the top without leaning back.'],
+  'dumbbell bench press': ['Lie on a bench, dumbbells over your chest. Lower them to the sides of your chest, elbows about 45° from your body, then press up.', 'Keep your feet flat and shoulder blades squeezed together.'],
+  'incline dumbbell press': ['On a bench set at a low incline, press dumbbells from the top of your chest up over your shoulders.', 'A 30° incline is plenty.'],
+  'bench press': ['Lie under the bar with eyes beneath it. Grip just wider than shoulders, lower the bar to your lower chest, then press up.', 'Always use a spotter or safety arms when going heavy.'],
+  'one-arm row': ['One hand and knee on a bench, dumbbell in the other hand. Pull it up to your hip, then lower slowly.', 'Lead with your elbow and avoid twisting your body.'],
+  'chest-supported row': ['Lie face down on an incline bench with dumbbells hanging. Row them up to your sides, squeezing your shoulder blades together.', 'Pause at the top for a second.'],
+  'bent-over row': ['Hinge forward with a flat back, weight hanging below your shoulders. Pull it to your lower ribs, then lower.', 'Keep your neck in line with your back; look at the floor a little ahead.'],
+  'barbell row': ['Hinge forward to about 45° with a flat back. Pull the bar to your lower ribs, then lower under control.', 'If you have to swing your body, lighten the weight.'],
+  'seated shoulder press': ['Sit tall with dumbbells at shoulder height, palms forward. Press them overhead, then lower to your shoulders.', 'Brace your stomach so your back doesn’t arch.'],
+  'overhead press': ['Standing, bar at the front of your shoulders. Press it straight overhead, moving your head back out of the way, then lower.', 'Squeeze your bottom to keep your lower back safe.'],
+  'one-arm press': ['Kettlebell or dumbbell at your shoulder. Press it overhead until your arm is straight, then lower slowly.', 'Make a fist with your free hand and brace your stomach.'],
+  'lateral raise': ['Stand with light dumbbells at your sides. Raise them out to shoulder height with slightly bent elbows, then lower slowly.', 'Lead with your elbows; lighter is better here.'],
+  'biceps curl': ['Hold weights with palms forward. Bend your elbows to curl them up to your shoulders, then lower slowly.', 'Keep your elbows pinned to your sides.'],
+  'curl': ['Hold the weight with palms forward. Curl it up to your shoulders, then lower under control.', 'Don’t swing. Lower for a slow count of two.'],
+  'hammer curl': ['Hold dumbbells with palms facing in. Curl them up keeping that grip, then lower.', 'Keep your wrists straight and elbows still.'],
+  'overhead triceps extension': ['Hold one dumbbell overhead with both hands. Lower it behind your head by bending your elbows, then straighten your arms.', 'Keep your elbows pointing forward, close to your head.'],
+  'band row': ['Anchor the band at chest height. Pull the handles to your ribs, squeezing your shoulder blades, then return slowly.', 'Step further away for more tension.'],
+  'band overhead press': ['Stand on the band, handles at your shoulders. Press overhead, then lower.', 'Keep your ribs down and don’t lean back.'],
+  'band pull-apart': ['Hold a band in front of you at shoulder height. Pull your hands apart until the band touches your chest, then return.', 'Keep your arms nearly straight and shoulders down.'],
+  'band biceps curl': ['Stand on the band, handles in hand. Curl up to your shoulders, then lower slowly.', 'Keep elbows at your sides.'],
+  'band squat': ['Stand on the band with the handles at your shoulders. Squat down and stand back up against the band.', 'Push your knees out as you stand.'],
+  'band glute bridge': ['A glute bridge with a mini band just above your knees.', 'Press your knees out against the band the whole time.'],
+  'band good morning': ['Stand on the band with the loop behind your neck. Hinge forward with a flat back, then stand up tall.', 'Move from the hips, not the lower back.'],
+  'lateral band walk': ['Mini band above your knees or ankles. In a half squat, step sideways keeping tension in the band.', 'Don’t let your feet come together.'],
+  'two-hand swing': ['Kettlebell a little in front of you. Hike it back between your legs, then snap your hips forward to float it to chest height. Let it swing back and repeat.', 'It’s a hip movement, not a squat or a lift with the arms.'],
+  'swing': ['Hike the kettlebell between your legs, then drive your hips forward so it floats up to chest height.', 'Stand tall and squeeze your bottom at the top.'],
+  'goblet squat + press': ['A goblet squat, then as you stand press the weight overhead. Lower it to your chest and repeat.', 'Use the drive from your legs to help the press.'],
+  'turkish get-up': ['Lie down holding a kettlebell up with a straight arm. Step by step, rise to standing while keeping the weight overhead, then reverse back down.', 'Learn it with no weight or a shoe balanced on your fist first.'],
+  'halo': ['Hold a kettlebell upside down by the horns at your chest. Circle it slowly around your head, then reverse.', 'Keep it close to your head and your stomach braced.'],
+  'suitcase carry': ['Hold a heavy weight in one hand and walk tall without leaning.', 'Pretend you have a glass of water on your head.'],
+  'farmer carry': ['Hold a heavy weight in each hand and walk with short, steady steps.', 'Shoulders back and down, grip tight.'],
+  'pull-up': ['Hang from the bar with palms facing away. Pull your chest up toward the bar, then lower all the way down.', 'Can’t do one yet? Jump to the top and lower yourself slowly over 5 seconds.'],
+  'chin-up': ['Hang with palms facing you, hands shoulder-width. Pull until your chin passes the bar, then lower fully.', 'Start each rep from a dead hang.'],
+  'weighted pull-up': ['A pull-up with a weight belt, vest, or dumbbell between your feet.', 'Only add weight once you can do 8 clean pull-ups.'],
+  'inverted row': ['Lie under a low bar or table edge, grip it, body straight. Pull your chest up to it, then lower.', 'Bend your knees to make it easier.'],
+  'hanging knee raise': ['Hang from a bar and lift your knees up toward your chest, then lower slowly.', 'Stop the swing between reps.'],
+  'hanging leg raise': ['Hang from a bar and lift straight legs up to hip height or higher, then lower slowly.', 'Curl your pelvis up at the top to work the lower stomach.'],
+  'dead hang': ['Simply hang from the bar with straight arms for the time given.', 'Keep your shoulders gently engaged, not up by your ears.'],
+  'dip': ['Support yourself on parallel bars with straight arms. Lower until your shoulders are just below your elbows, then press up.', 'Lean slightly forward and keep your shoulders down.'],
+  'face pull': ['Cable or band at head height with a rope. Pull toward your forehead, hands finishing beside your ears.', 'Think of showing your biceps like a strongman pose.'],
+  'ab wheel': ['Kneel holding the wheel. Roll forward as far as you can with a flat back, then pull back to the start.', 'Only go as far as you can without your back sagging.'],
+  'cat–cow': ['On hands and knees, slowly round your back up toward the ceiling, then let it dip as you lift your chest.', 'Move with your breath: breathe out as you round, in as you dip.'],
+  'world’s greatest stretch': ['Step into a deep lunge, put the same-side hand on the floor inside your front foot, then rotate and reach your other arm to the ceiling.', 'Keep the back knee off the floor if you can.'],
+  '90/90 hip switch': ['Sit with both knees bent at 90°, one leg in front and one to the side. Rotate your knees to the other side, then back.', 'Use your hands behind you for support at first.'],
+  'thoracic rotation': ['On hands and knees, put one hand behind your head and rotate that elbow toward the ceiling, then down toward the opposite wrist.', 'Follow your elbow with your eyes.'],
+  'wall slide': ['Stand with your back to a wall, arms in a goalpost shape against it. Slide your arms up and down without them coming off the wall.', 'Keep your lower back touching the wall too.'],
+  'deep squat hold': ['Hold onto a doorframe or post and sink into your deepest comfortable squat. Breathe and hold.', 'Shift gently side to side to ease into it.'],
+  'exercise bike': ['Seat height so your knee is slightly bent at the bottom of the pedal stroke. Pedal at the pace given.', 'Keep a light grip and relaxed shoulders.'],
+  'rowing machine': ['Push with your legs first, then lean back slightly, then pull the handle to your lower ribs. Reverse in the order arms, body, legs.', 'Legs do most of the work. “Legs, body, arms — arms, body, legs.”'],
+  'treadmill': ['Walk or run at the speed and incline given. Look ahead, not at your feet.', 'Avoid holding the rails; use a lower speed instead.'],
+  'jump rope': ['Turn the rope from your wrists and hop just high enough to clear it.', 'Stay on the balls of your feet and keep jumps small.'],
+  'medicine ball slam': ['Lift the ball overhead, then slam it down in front of you, bending at the hips. Pick it up and repeat.', 'Use a ball made for slamming so it doesn’t bounce back.'],
+  'battle ropes': ['Hold an end in each hand in a half squat and make waves by moving your arms fast up and down.', 'Keep your stomach braced and knees soft.'],
+  'kettlebell swing': ['Hike the kettlebell between your legs, then drive your hips forward so it floats up to chest height.', 'Stand tall and squeeze your bottom at the top.'],
+};
+const GUIDE_ALIASES = [
+  [/incline push-?up/, 'incline push-up'], [/knee push-?up/, 'knee push-up'], [/diamond push-?up/, 'diamond push-up'], [/pike push-?up/, 'pike push-up'], [/push-?up/, 'push-up'],
+  [/run.*walk|walk.*run|interval/, 'run / walk intervals'], [/good morning/, 'good morning'], [/hip hinge/, 'hip hinge'],
+  [/single-?leg (romanian|rdl)/, 'single-leg romanian deadlift'], [/romanian|\brdl\b/, 'romanian deadlift'], [/kettlebell deadlift/, 'kettlebell deadlift'], [/deadlift/, 'deadlift'],
+  [/bulgarian/, 'bulgarian split squat'], [/goblet squat \+ press|squat and press/, 'goblet squat + press'], [/goblet/, 'goblet squat'], [/sumo/, 'sumo squat'], [/front squat/, 'front squat'], [/back squat|barbell squat/, 'back squat'], [/jump squat/, 'jump squat'], [/band squat/, 'band squat'], [/split squat/, 'split squat'],
+  [/glute bridge/, 'glute bridge'], [/hip thrust/, 'hip thrust'], [/side plank/, 'side plank'], [/plank/, 'plank'],
+  [/incline (dumbbell |db )?press/, 'incline dumbbell press'], [/dumbbell bench|db bench|floor press/, 'dumbbell bench press'], [/bench press/, 'bench press'],
+  [/chest-?supported/, 'chest-supported row'], [/one-?arm row|single-?arm row/, 'one-arm row'], [/barbell row/, 'barbell row'], [/inverted row|bodyweight row/, 'inverted row'], [/band row/, 'band row'], [/bent-?over row|kettlebell row|dumbbell row/, 'bent-over row'],
+  [/shoulder press|military press/, 'seated shoulder press'], [/overhead press|\bohp\b/, 'overhead press'], [/one-?arm press|single-?arm press/, 'one-arm press'], [/band overhead/, 'band overhead press'],
+  [/hammer curl/, 'hammer curl'], [/band (biceps )?curl/, 'band biceps curl'], [/biceps? curl/, 'biceps curl'], [/curl/, 'curl'], [/triceps|tricep/, 'overhead triceps extension'],
+  [/weighted pull-?up/, 'weighted pull-up'], [/chin-?up/, 'chin-up'], [/pull-?up|negative/, 'pull-up'], [/hanging knee/, 'hanging knee raise'], [/hanging leg|leg raise/, 'hanging leg raise'], [/dead hang/, 'dead hang'],
+  [/swing/, 'swing'], [/get-?up/, 'turkish get-up'], [/farmer/, 'farmer carry'], [/suitcase/, 'suitcase carry'],
+  [/walking lunge/, 'walking lunge'], [/reverse lunge|lunge/, 'reverse lunge'], [/step-?up/, 'step-up'], [/calf/, 'calf raise'],
+  [/bike|cycl|spin/, 'exercise bike'], [/row(ing)? machine|rower|erg/, 'rowing machine'], [/treadmill/, 'treadmill'], [/skip|jump rope/, 'jump rope'], [/slam/, 'medicine ball slam'], [/battle rope/, 'battle ropes'],
+  [/cat.?cow/, 'cat–cow'], [/greatest stretch/, 'world’s greatest stretch'], [/90\/90/, '90/90 hip switch'], [/thoracic/, 'thoracic rotation'], [/wall slide/, 'wall slide'], [/squat hold/, 'deep squat hold'],
+  [/warm-?up walk/, 'warm-up walk'], [/cool-?down/, 'cool-down walk'], [/brisk walk|walk/, 'brisk walk'], [/squat/, 'squat'],
+];
+const guideKey = n => String(n || '').toLowerCase().replace(/\(.*?\)/g, '').replace(/,.*$/, '').replace(/\s+/g, ' ').trim();
+const guideSlug = n => guideKey(n).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 120) || 'x';
+function guideFor(name, own) {
+  if (own && (own.how || own.tip)) return { how: own.how || '', tip: own.tip || '' };
+  const k = guideKey(name);
+  if (EX_GUIDE[k]) return { how: EX_GUIDE[k][0], tip: EX_GUIDE[k][1] };
+  for (const [re, key] of GUIDE_ALIASES) if (re.test(k) && EX_GUIDE[key]) return { how: EX_GUIDE[key][0], tip: EX_GUIDE[key][1] };
+  const saved = S.guides.find(g => g.id === guideSlug(name));
+  return saved ? { how: saved.how || '', tip: saved.tip || '' } : null;
+}
+const guideLoading = new Set();
+async function fetchGuide(name) {
+  if (!sample) throw { code: 'unavailable' };
+  const slug = guideSlug(name);
+  const res = await sample.json(`Explain how to do the exercise "${name}" for someone training at home or in a gym.\nReply with only JSON: {"how": "1-2 plain sentences on how to do it, with the key position and movement", "tip": "one short safety or technique tip"}`, { modelTier: 'quick' });
+  const how = String(res?.how || '').trim(), tip = String(res?.tip || '').trim();
+  if (!how) throw { code: 'invalid_json' };
+  try { await db.doc('guides/' + slug).set({ name, how, tip, createdAt: Date.now() }); } catch (e) {}
+  S.guides = [...S.guides.filter(g => g.id !== slug), { id: slug, name, how, tip }];
+  return { how, tip };
+}
+// "How to do it" expander used on plans, the logger and progress pages.
+function howTo(name, own, { open = false } = {}) {
+  const box = el('details', { class: 'howto', open: open || null });
+  const body = el('div', { class: 'howto-body' });
+  const paint = g => body.replaceChildren(el('p', { text: g.how }), g.tip ? el('p', { class: 'howto-tip' }, el('b', { text: 'Tip: ' }), g.tip) : null);
+  const g = guideFor(name, own);
+  if (!g && !sample) return null;
+  if (g) paint(g);
+  else {
+    const btn = el('button', { class: 'btn ghost', type: 'button', text: sample ? 'Get a guide from Claude' : 'No guide saved for this exercise yet' , disabled: !sample });
+    btn.addEventListener('click', async () => {
+      if (guideLoading.has(name)) return; guideLoading.add(name);
+      btn.disabled = true; btn.textContent = 'Writing a guide…';
+      try { paint(await fetchGuide(name)); }
+      catch (e) { btn.disabled = false; btn.textContent = e?.code === 'rate_limited' ? 'Too many requests — try again in a minute' : 'Couldn’t get a guide. Try again'; }
+      guideLoading.delete(name);
+    });
+    body.replaceChildren(btn);
+  }
+  box.append(el('summary', { text: 'How to do it' }), body);
+  return box;
+}
+
+/* ================= READING ================= */
+function Reading() {
+  const ui = { mode: 'bible', b: 42, c: 1, open: new Set(), all: false, selected: null, ask: null, ctl: null, editing: null, drafts: {}, jump: null, openMeet: new Set(), mdrafts: {}, meetForm: null, editMeet: null, addingMeet: false, lastSeries: '' };
+  try { const s = JSON.parse(localStorage.getItem('daybook.bible') || 'null'); if (s && BIBLE_IDX[s.b] && s.c >= 1 && s.c <= BIBLE_IDX[s.b][1].length) { ui.b = s.b; ui.c = s.c; } if (s?.mode) ui.mode = s.mode; } catch (e) {}
+  const remember = () => { try { localStorage.setItem('daybook.bible', JSON.stringify({ b: ui.b, c: ui.c, mode: ui.mode })); } catch (e) {} };
+  let root, body;
+  const srcById = id => S.sources.find(s => s.id === id);
+  const verseNotes = (b, c, v) => S.notes.filter(n => n.kind === 'verse' && n.b === b && n.c === c && n.v === v).sort((x, y) => (isMine(y.author) - isMine(x.author)) || byOld(x, y));
+  const chapterHas = (b, c) => S.notes.some(n => n.kind === 'verse' && n.b === b && n.c === c);
+  const srcLine = s => s.author || '';
+  const meetById = id => S.meetings.find(m => m.id === id);
+
+  function mount(v) {
+    root = v;
+    const askInput = el('input', { id: 'rdAsk', type: 'search', placeholder: 'Find my notes on… (grace, the Lord’s coming, Romans 8, #assembly)', 'aria-label': 'Search your reading notes' });
+    const askForm = el('form', { class: 'ask', autocomplete: 'off', onsubmit: e => { e.preventDefault(); runAsk(askInput.value); } }, askInput, el('button', { class: 'btn primary', type: 'submit', text: 'Find' }));
+    const seg = el('div', { class: 'seg', role: 'group', 'aria-label': 'Reading section' },
+      el('button', { type: 'button', 'data-m': 'bible', text: 'JND Bible', onclick: () => setMode('bible') }),
+      el('button', { type: 'button', 'data-m': 'sermons', text: 'Ministry & books', onclick: () => setMode('sermons') }));
+    body = el('div', { class: 'panel' });
+    v.append(el('div', { class: 'panel' },
+      el('div', { class: 'panel', style: 'gap:8px' }, askForm, el('p', { class: 'hint', text: 'Search every note — on verses, ministry and books — by the words in it. Type a passage like “John 3:16” to go straight to it, or start with # for a tag.' })),
+      seg, body));
+    if (ui.ask) askInput.value = ui.ask.q;
+    draw();
+  }
+  function setMode(m) { ui.mode = m; ui.ask = null; ui.editing = null; const a = $('rdAsk'); if (a) a.value = ''; remember(); draw(); }
+  function draw() {
+    root.querySelectorAll('.seg [data-m]').forEach(b => b.setAttribute('aria-pressed', !ui.ask && b.dataset.m === ui.mode ? 'true' : 'false'));
+    if (ui.ask) return drawAsk();
+    if (ui.mode === 'bible') drawBible(); else drawSermons(true);
+  }
+
+  /* ---------- Note card (verse or sermon/book) ---------- */
+  function noteCard(n, opts = {}) {
+    if (ui.editing === n.id) return editCard(n);
+    const s = n.kind === 'verse' ? null : srcById(n.sourceId);
+    const mine = isMine(n.author);
+    let srcBtn = null;
+    if (opts.showSource) {
+      if (n.kind === 'verse') srcBtn = el('button', { class: 'src', type: 'button', onclick: () => goVerse(n.b, n.c, n.v) }, el('b', { text: refOf(n.b, n.c, n.v) }));
+      else if (s) { const mt = n.meetingId ? meetById(n.meetingId) : null;
+        srcBtn = el('button', { class: 'src', type: 'button', onclick: () => openMinistry(s.id, mt?.id) }, el('b', { text: volName(s) }), mt ? ` · ${meetTitle(mt)}, ${ministryDate(mt.date)}` : srcLine(s) ? ` · ${srcLine(s)}` : ''); }
+    }
+    const refTxt = n.kind !== 'verse' && n.ref ? (/^\d/.test(n.ref) ? `p. ${n.ref}` : n.ref) : null;
+    const quote = opts.showSource && n.kind === 'verse' ? cachedVerse(n.b, n.c, n.v) : null;
+    return el('li', { class: 'note' },
+      el('div', { class: 'note-head' }, srcBtn, refTxt ? el('span', { class: 'ref', text: refTxt }) : null,
+        n.kind === 'verse' || !mine ? el('span', { class: 'who' + (mine ? ' mine' : ''), text: mine ? 'My note' : (n.author || '') }) : null,
+        el('span', { class: 'stamp', text: stampDate(n.createdAt) })),
+      quote ? el('p', { class: 'verse-quote' }, verseText(quote)) : null,
+      el('p', { class: 'note-text' }, highlight(n.text || '', opts.words)),
+      n.scripture ? el('div', { class: 'row' }, el('span', { class: 'hint', text: 'Scripture:' }), parseRanges(n.scripture).length ? parseRanges(n.scripture).map(r => el('button', { class: 'chip', type: 'button', text: rangeLabel(r), onclick: () => goVerse(r.b, r.c1, r.v1 || 1) })) : el('span', { class: 'hint', text: n.scripture })) : null,
+      opts.why ? el('p', { class: 'why', text: opts.why }) : null,
+      el('div', { class: 'note-foot' },
+        (n.tags || []).map(t => el('button', { class: 'chip', type: 'button', text: '#' + t, onclick: () => runAsk('#' + t) })),
+        el('div', { class: 'actions' },
+          el('button', { class: 'btn ghost', type: 'button', text: 'Edit', onclick: () => { ui.editing = n.id; refresh(); } }),
+          armBtn('Delete', 'Confirm delete', async () => { try { await db.doc('notes/' + n.id).delete(); toast('Note deleted'); } catch (e) { toast(writeError(e)); } }))));
+  }
+  function editCard(n) {
+    const s = n.kind === 'verse' ? null : srcById(n.sourceId);
+    const ta = el('textarea', { id: 'edText', rows: 4, value: n.text || '' });
+    const au = el('input', { id: 'edAuthor', value: n.author || 'Me', list: 'authors' });
+    const rf = n.kind === 'verse' ? null : el('input', { id: 'edRef', value: n.ref || '' });
+    const sc = n.kind === 'verse' ? null : el('input', { id: 'edScr', value: n.scripture || '' });
+    const tg = el('input', { id: 'edTags', value: (n.tags || []).join(', ') });
+    const save = async () => { const text = ta.value.trim(); if (!text) return;
+      const body = { text, author: au.value.trim() || 'Me', tags: parseTags(tg.value), updatedAt: Date.now() }; if (rf) body.ref = rf.value.trim(); if (sc) body.scripture = sc.value.trim();
+      try { await db.doc('notes/' + n.id).update(body); ui.editing = null; refresh(); toast('Note saved'); } catch (e) { toast(writeError(e)); } };
+    ta.addEventListener('keydown', e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) save(); });
+    return el('li', { class: 'note' },
+      el('div', { class: 'field' }, el('label', { for: 'edText', text: 'Note' }), ta),
+      el('div', { class: 'grid2' },
+        el('div', { class: 'field' }, el('label', { for: 'edAuthor', text: 'Whose note' }), au),
+        rf ? el('div', { class: 'field' }, el('label', { for: 'edRef', text: 'Page' }), rf) : null,
+        sc ? el('div', { class: 'field' }, el('label', { for: 'edScr', text: 'Scripture referenced' }), sc) : null,
+        el('div', { class: 'field' }, el('label', { for: 'edTags', text: 'Tags, comma separated' }), tg)),
+      el('div', { class: 'row' }, el('button', { class: 'btn primary', type: 'button', text: 'Save', onclick: save }), el('button', { class: 'btn ghost', type: 'button', text: 'Cancel', onclick: () => { ui.editing = null; refresh(); } })));
+  }
+
+  /* ---------- Bible ---------- */
+  let verseRows = null;
+  function drawBible() {
+    const [name, counts] = BIBLE_IDX[ui.b];
+    const bookSel = el('select', { id: 'bkSel', 'aria-label': 'Book' },
+      el('optgroup', { label: 'Old Testament' }, BIBLE.slice(0, 39).map((n, i) => el('option', { value: i, text: n, selected: i === ui.b }))),
+      el('optgroup', { label: 'New Testament' }, BIBLE.slice(39).map((n, i) => el('option', { value: i + 39, text: n, selected: i + 39 === ui.b }))));
+    bookSel.addEventListener('change', () => goChapter(Number(bookSel.value), 1));
+    const chSel = el('select', { id: 'chSel', 'aria-label': 'Chapter' }, counts.map((_, i) => el('option', { value: i + 1, text: `Chapter ${i + 1}`, selected: i + 1 === ui.c })));
+    chSel.addEventListener('change', () => goChapter(ui.b, Number(chSel.value)));
+    const chGrid = el('div', { class: 'chapters', id: 'chGrid' }, counts.map((_, i) => el('button', { type: 'button', text: i + 1, 'aria-current': i + 1 === ui.c ? 'true' : 'false', class: chapterHas(ui.b, i + 1) ? 'has' : '', 'aria-label': `Chapter ${i + 1}`, onclick: () => goChapter(ui.b, i + 1) })));
+    const prev = ui.c > 1 ? [ui.b, ui.c - 1] : ui.b > 0 ? [ui.b - 1, BIBLE_IDX[ui.b - 1][1].length] : null;
+    const next = ui.c < counts.length ? [ui.b, ui.c + 1] : ui.b < 65 ? [ui.b + 1, 1] : null;
+    const allBtn = el('button', { class: 'toggle', type: 'button', 'aria-pressed': ui.all ? 'true' : 'false', text: 'Open all notes', onclick: () => {
+      ui.all = !ui.all; ui.open = new Set();
+      if (ui.all) S.notes.forEach(n => { if (n.kind === 'verse' && n.b === ui.b && n.c === ui.c) ui.open.add(`${n.c}:${n.v}`); });
+      allBtn.setAttribute('aria-pressed', ui.all ? 'true' : 'false'); verseRows?.forEach(r => r.paint()); } });
+    const versesEl = el('div', { class: 'verses', id: 'verses' }, el('div', { class: 'thinking' }, el('span', { class: 'dot' }), `Opening ${name} ${ui.c}…`));
+    body.replaceChildren(el('div', { class: 'layout' },
+      el('aside', { class: 'side', 'aria-label': 'Choose a passage' },
+        el('div', { class: 'field' }, el('label', { for: 'bkSel', text: 'Book' }), bookSel),
+        el('div', { class: 'field chap-select' }, el('label', { for: 'chSel', text: 'Chapter' }), chSel),
+        el('div', { class: 'field' }, el('span', { class: 'lbl', text: `${plural(counts.length, 'chapter')} · a dot marks notes` }), chGrid)),
+      el('div', { class: 'panel' },
+        el('div', { class: 'bible-head' },
+          el('div', { class: 'panel', style: 'gap:2px' }, el('p', { class: 'eyebrow', text: 'J. N. Darby translation' }), el('h2', { text: `${name} ${ui.c}` })),
+          el('div', { class: 'row' }, allBtn,
+            el('button', { class: 'btn', type: 'button', text: '‹ Prev', disabled: !prev, 'aria-label': 'Previous chapter', onclick: () => prev && goChapter(...prev) }),
+            el('button', { class: 'btn', type: 'button', text: 'Next ›', disabled: !next, 'aria-label': 'Next chapter', onclick: () => next && goChapter(...next) }))),
+        el('p', { class: 'hint', text: 'Tap a verse to read its notes or add one — your own, or one from someone else under their name.' }),
+        versesEl,
+        el('div', { class: 'row', style: 'justify-content:space-between;max-width:760px' },
+          prev ? el('button', { class: 'btn ghost', type: 'button', text: `‹ ${refOf(...prev)}`, onclick: () => goChapter(...prev) }) : el('span'),
+          next ? el('button', { class: 'btn ghost', type: 'button', text: `${refOf(...next)} ›`, onclick: () => goChapter(...next) }) : null))));
+    const b = ui.b, c = ui.c;
+    verseRows = null;
+    loadBook(b).then(chs => {
+      if (ui.b !== b || ui.c !== c || !versesEl.isConnected) return;
+      const vs = chs[c - 1] || [];
+      verseRows = vs.map((t, i) => verseRow(b, c, i + 1, t));
+      versesEl.replaceChildren(...verseRows.map(r => r.el));
+      if (ui.jump) { const r = verseRows[ui.jump - 1]; ui.jump = null; if (r) { r.el.scrollIntoView({ block: 'center' }); r.el.querySelector('.vbtn')?.focus({ preventScroll: true }); } }
+    }).catch(() => { if (versesEl.isConnected) versesEl.replaceChildren(el('div', { class: 'empty' }, el('p', { text: 'This chapter didn’t load. Check your connection and choose the chapter again.' }))); });
+  }
+  function verseRow(b, c, v, text) {
+    const key = `${c}:${v}`;
+    const count = el('span', { class: 'vc' });
+    const btn = el('button', { class: 'vbtn', type: 'button', 'aria-expanded': 'false' }, el('span', { class: 'vn', text: v }), el('span', { class: 'vt' }, verseText(text)), count);
+    const notesBox = el('div', { class: 'vnotes', hidden: true });
+    const list = el('ul', { class: 'cards' });
+    const minBox = el('div', { class: 'panel', style: 'gap:4px' });
+    let form = null;
+    const row = el('div', { class: 'verse', id: `v${v}` }, btn, notesBox);
+    const isOpen = () => ui.open.has(key);
+    const minBadge = el('span', { class: 'vc min' });
+    btn.append(minBadge);
+    function paint() {
+      const ns = verseNotes(b, c, v);
+      const reads = S.meetings.filter(m => m.scriptures && parseRanges(m.scriptures).some(r => covers(r, b, c, v)));
+      const mnotes = S.notes.filter(n => n.kind !== 'verse' && n.scripture && parseRanges(n.scripture).some(r => covers(r, b, c, v)));
+      count.textContent = ns.length ? plural(ns.length, 'note') : ''; count.hidden = !ns.length;
+      const mc = new Set([...reads.map(m => m.id), ...mnotes.map(n => n.id)]).size;
+      minBadge.textContent = mc ? 'Ministry' + (mc > 1 ? ' ' + mc : '') : ''; minBadge.hidden = !mc; minBadge.title = mc ? 'Read or referred to in ministry' : '';
+      const open = isOpen();
+      row.classList.toggle('open', open); btn.setAttribute('aria-expanded', open ? 'true' : 'false'); notesBox.hidden = !open;
+      if (!open) return;
+      list.replaceChildren(...ns.map(n => noteCard(n)));
+      minBox.replaceChildren(...(reads.length || mnotes.length ? [el('p', { class: 'eyebrow', text: 'In ministry' }),
+        el('ul', { class: 'minlinks' },
+          reads.map(m => { const src = srcById(m.sourceId); return el('li', {}, el('button', { class: 'src', type: 'button', onclick: () => openMinistry(m.sourceId, m.id) }, el('b', { text: src ? volName(src) : 'Ministry' }), ` · ${meetTitle(m)}, ${ministryDate(m.date)}`), el('span', { class: 'hint', text: ' — read' })); }),
+          mnotes.map(n => { const src = srcById(n.sourceId), mt = n.meetingId ? meetById(n.meetingId) : null; return el('li', {}, el('button', { class: 'src', type: 'button', onclick: () => openMinistry(n.sourceId, mt?.id) }, el('b', { text: src ? volName(src) : 'Ministry' }), mt ? ` · ${meetTitle(mt)}` : '', n.ref ? `, p. ${n.ref}` : ''), el('span', { class: 'hint', text: ' — your note: ' + (n.text.length > 90 ? n.text.slice(0, 90) + '…' : n.text) })); }))] : []));
+      if (!form) { form = verseForm(b, c, v); notesBox.replaceChildren(minBox, list, form); }
+    }
+    btn.addEventListener('click', () => { if (isOpen()) ui.open.delete(key); else ui.open.add(key); paint(); if (isOpen() && !verseNotes(b, c, v).length) form?.querySelector('textarea')?.focus({ preventScroll: true }); });
+    paint();
+    return { el: row, paint };
+  }
+  function verseForm(b, c, v) {
+    const ref = refOf(b, c, v);
+    const d = ui.drafts[ref] || (ui.drafts[ref] = { text: '', author: 'Me', tags: '' });
+    const ta = el('textarea', { rows: 3, id: `vt${c}_${v}`, placeholder: 'What this verse shows, or a note from someone else…', value: d.text, 'aria-label': `New note on ${ref}` });
+    const au = el('input', { id: `va${c}_${v}`, list: 'authors', value: d.author });
+    const tg = el('input', { id: `vg${c}_${v}`, placeholder: 'grace, Christ’s glory', value: d.tags });
+    ta.addEventListener('input', () => d.text = ta.value); au.addEventListener('input', () => d.author = au.value); tg.addEventListener('input', () => d.tags = tg.value);
+    const add = async () => {
+      const text = ta.value.trim(); if (!text) { ta.focus(); return; }
+      const author = au.value.trim() || 'Me', tags = parseTags(tg.value);
+      d.text = ''; ta.value = '';
+      try { await db.collection('notes').doc().set({ kind: 'verse', b, c, v, ref, author, text, tags, createdAt: Date.now() }); toast(`Note added to ${ref}`); }
+      catch (e) { d.text = text; ta.value = text; toast(writeError(e)); }
+    };
+    ta.addEventListener('keydown', e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) add(); });
+    return el('div', { class: 'vform' },
+      el('div', { class: 'field' }, el('label', { for: `vt${c}_${v}`, text: `Add a note on ${ref}` }), ta),
+      el('div', { class: 'composer-meta' },
+        el('div', { class: 'field' }, el('label', { for: `va${c}_${v}`, text: 'Whose note (Me, or their name)' }), au),
+        el('div', { class: 'field' }, el('label', { for: `vg${c}_${v}`, text: 'Tags, comma separated' }), tg),
+        el('button', { class: 'btn primary', type: 'button', text: 'Add note', onclick: add })));
+  }
+  function goChapter(b, c) { ui.b = b; ui.c = c; ui.open = new Set(); ui.all = false; ui.editing = null; remember(); draw(); window.scrollTo({ top: 0 }); }
+  function openMinistry(sourceId, meetingId) {
+    ui.mode = 'sermons'; ui.ask = null; ui.selected = sourceId; ui.editing = null; ui.meetForm = null; ui.editMeet = null; ui.addingMeet = false;
+    if (meetingId) ui.openMeet.add(meetingId);
+    const a = $('rdAsk'); if (a) a.value = ''; remember(); draw();
+    if (meetingId) setTimeout(() => $('meet-' + meetingId)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 60);
+  }
+  function goVerse(b, c, v) {
+    ui.mode = 'bible'; ui.ask = null; ui.b = b; ui.c = c; ui.open = new Set([`${c}:${v}`]); ui.jump = v; ui.editing = null;
+    const a = $('rdAsk'); if (a) a.value = ''; remember(); draw();
+  }
+
+  /* ---------- Ministry & books ---------- */
+  let sideList, main;
+  const MEET_TYPES = ['Reading', 'Preaching', 'Address', 'Care meeting', 'Fellowship meeting', 'Prayer meeting', 'Gospel preaching', 'Bible reading'];
+  const isMinistry = s => s && (s.kind === 'ministry' || s.kind === 'sermon');
+  const volName = s => s.kind === 'ministry' ? [s.series, s.volume].filter(Boolean).join(' ') || s.title || 'Ministry' : (s.title || 'Untitled');
+  const meetingsOf = id => S.meetings.filter(m => m.sourceId === id).sort((a, b) => String(a.date || '').localeCompare(String(b.date || '')) || byOld(a, b));
+  const meetTitle = m => `${m.type || 'Meeting'}${m.place ? ' at ' + m.place : ''}`;
+  const sortedSources = () => [...S.sources].sort((a, b) => {
+    const ka = isMinistry(a) ? 0 : 1, kb = isMinistry(b) ? 0 : 1; if (ka !== kb) return ka - kb;
+    if (ka === 0) { const sa = (a.series || 'Other').toLowerCase(), sb = (b.series || 'Other').toLowerCase(); if (sa !== sb) return sa.localeCompare(sb); return (parseFloat(b.volume) || 0) - (parseFloat(a.volume) || 0) || byNew(a, b); }
+    return byNew(a, b);
+  });
+  function fillDatalists() {
+    const set = (id, vals) => { const dl = $(id); if (dl) dl.replaceChildren(...[...new Set(vals.filter(Boolean))].sort((a, b) => a.localeCompare(b)).map(v => el('option', { value: v }))); };
+    set('seriesList', ['White Book', 'Remember Your Leaders', 'Order of the Service', ...S.sources.map(s => s.series)]);
+    set('ministerList', ['BDH', ...S.sources.map(s => s.author), ...S.meetings.map(m => m.minister)]);
+    set('placeList', S.meetings.map(m => m.place));
+    set('meetTypes', [...MEET_TYPES, ...S.meetings.map(m => m.type)]);
+  }
+  const draftOf = k => ui.mdrafts[k] || (ui.mdrafts[k] = { text: '', page: '', scripture: '', tags: '' });
+
+  function drawSermons() {
+    const kind = el('select', { id: 'srcKind' }, el('option', { value: 'ministry', text: 'Ministry volume' }), el('option', { value: 'book', text: 'Other book' }));
+    const series = el('input', { id: 'srcSeries', list: 'seriesList', placeholder: 'White Book', value: ui.lastSeries || 'White Book' });
+    const volume = el('input', { id: 'srcVolume', inputmode: 'numeric', placeholder: '####' });
+    const title = el('input', { id: 'srcTitle', placeholder: 'Optional' });
+    const author = el('input', { id: 'srcAuthor', list: 'ministerList', value: 'BDH' });
+    const seriesF = el('div', { class: 'field' }, el('label', { for: 'srcSeries', text: 'Series' }), series);
+    const volF = el('div', { class: 'field' }, el('label', { for: 'srcVolume', text: 'Volume number' }), volume);
+    const titleLbl = el('label', { for: 'srcTitle', text: 'Title (optional)' });
+    const authorLbl = el('label', { for: 'srcAuthor', text: 'Minister' });
+    const sync = () => { const m = kind.value === 'ministry'; seriesF.hidden = !m; volF.hidden = !m; titleLbl.textContent = m ? 'Title (optional)' : 'Title'; title.placeholder = m ? 'Optional' : ''; authorLbl.textContent = m ? 'Minister' : 'Author'; if (!m && author.value === 'BDH') author.value = ''; if (m && !author.value) author.value = 'BDH'; };
+    kind.addEventListener('change', sync);
+    const addForm = el('form', { class: 'box', hidden: true, autocomplete: 'off', onsubmit: async e => {
+      e.preventDefault();
+      const m = kind.value === 'ministry';
+      const body = m ? { kind: 'ministry', series: series.value.trim() || 'Ministry', volume: volume.value.trim(), title: title.value.trim(), author: author.value.trim() } : { kind: 'book', title: title.value.trim(), author: author.value.trim() };
+      if (m && !body.volume && !body.title) { volume.focus(); toast('Add the volume number or a title'); return; }
+      if (!m && !body.title) { title.focus(); toast('Add the book’s title'); return; }
+      const ref = db.collection('sources').doc();
+      try { await ref.set({ ...body, createdAt: Date.now() }); if (m) ui.lastSeries = body.series; volume.value = ''; title.value = ''; addForm.hidden = true; ui.selected = ref.id; refreshSermons(true); toast(`Added ${volName(body)}`); } catch (err) { toast(writeError(err)); }
+    } },
+      el('div', { class: 'field' }, el('label', { for: 'srcKind', text: 'Type' }), kind),
+      el('div', { class: 'grid2' }, seriesF, volF),
+      el('div', { class: 'field' }, titleLbl, title),
+      el('div', { class: 'field' }, authorLbl, author),
+      el('div', { class: 'row' }, el('button', { class: 'btn primary', type: 'submit', text: 'Add' }), el('button', { class: 'btn ghost', type: 'button', text: 'Cancel', onclick: () => addForm.hidden = true })));
+    sideList = el('ul', { class: 'list' }); main = el('div', { class: 'panel' });
+    body.replaceChildren(el('div', { class: 'layout' },
+      el('aside', { class: 'side', 'aria-label': 'Ministry and books' },
+        el('div', { class: 'side-head' }, el('p', { class: 'eyebrow', text: 'Ministry & books' }), el('button', { class: 'btn ghost', type: 'button', text: '+ Add', onclick: () => { addForm.hidden = !addForm.hidden; if (!addForm.hidden) (kind.value === 'ministry' ? volume : title).focus(); } })),
+        addForm, sideList), main));
+    refreshSermons(true);
+  }
+
+  function noteComposer(key, s, meeting) {
+    const d = draftOf(key), m = isMinistry(s);
+    const ta = el('textarea', { id: `mt_${key}`, rows: 3, placeholder: m ? 'A point made, a passage opened up, something to think over…' : 'A passage, an idea, a question it raised…', value: d.text });
+    const pg = el('input', { id: `mp_${key}`, placeholder: '12', value: d.page, inputmode: 'numeric' });
+    const sc = el('input', { id: `ms_${key}`, placeholder: 'John 14:1-3', value: d.scripture });
+    const tg = el('input', { id: `mg_${key}`, placeholder: 'the assembly, service', value: d.tags });
+    ta.addEventListener('input', () => d.text = ta.value); pg.addEventListener('input', () => d.page = pg.value); sc.addEventListener('input', () => d.scripture = sc.value); tg.addEventListener('input', () => d.tags = tg.value);
+    const add = async () => {
+      const text = ta.value.trim(); if (!text) { ta.focus(); return; }
+      const note = { sourceId: s.id, meetingId: meeting?.id || '', text, ref: pg.value.trim(), scripture: sc.value.trim(), tags: parseTags(tg.value), author: 'Me', createdAt: Date.now() };
+      d.text = ''; d.scripture = ''; ta.value = ''; sc.value = '';
+      try { await db.collection('notes').doc().set(note); toast('Note added'); setTimeout(() => $(`mt_${key}`)?.focus(), 50); }
+      catch (e) { d.text = text; d.scripture = note.scripture; const t = $(`mt_${key}`); if (t) t.value = text; toast(writeError(e)); }
+    };
+    ta.addEventListener('keydown', e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) add(); });
+    return el('div', { class: 'vform' },
+      el('div', { class: 'field' }, el('label', { for: `mt_${key}`, text: meeting ? `Note on ${meetTitle(meeting)}` : m ? 'Note on this volume' : 'New note' }), ta),
+      el('div', { class: 'grid3' },
+        el('div', { class: 'field' }, el('label', { for: `mp_${key}`, text: 'Page' }), pg),
+        el('div', { class: 'field' }, el('label', { for: `ms_${key}`, text: 'Scripture referenced' }), sc),
+        el('div', { class: 'field' }, el('label', { for: `mg_${key}`, text: 'Tags, comma separated' }), tg)),
+      el('div', { class: 'row', style: 'justify-content:flex-end' }, el('button', { class: 'btn primary', type: 'button', text: 'Add note', onclick: add })));
+  }
+  function scriptureChips(str) {
+    return parseRanges(str).map(r => el('button', { class: 'chip', type: 'button', text: rangeLabel(r), title: 'Open in the Bible', onclick: e => { e.preventDefault(); goVerse(r.b, r.c1, r.v1 || 1); } }));
+  }
+
+  function meetingForm(s, existing) {
+    const last = meetingsOf(s.id).slice(-1)[0];
+    const f = ui.meetForm || (ui.meetForm = existing ? { id: existing.id, type: existing.type || '', place: existing.place || '', date: existing.date || '', scriptures: existing.scriptures || '', pages: existing.pages || '', minister: existing.minister || '' }
+      : { type: last?.type || 'Reading', place: last?.place || '', date: last?.date || todayIso(), scriptures: '', pages: '', minister: '' });
+    const inp = (k, id, attrs) => { const x = el('input', { id, value: f[k], ...attrs }); x.addEventListener('input', () => f[k] = x.value); return x; };
+    const type = inp('type', 'mfType', { list: 'meetTypes', placeholder: 'Reading' });
+    const place = inp('place', 'mfPlace', { list: 'placeList', placeholder: 'Sydney' });
+    const date = inp('date', 'mfDate', { type: 'date' });
+    const dayLbl = el('span', { class: 'hint', text: f.date ? ministryDate(f.date) : '' });
+    date.addEventListener('change', () => { f.date = date.value; dayLbl.textContent = f.date ? ministryDate(f.date) : ''; });
+    const scr = el('textarea', { id: 'mfScr', rows: 2, placeholder: 'Ephesians 4:1-16; Colossians 2:19\n(separate passages with ; or new lines)', value: f.scriptures });
+    const preview = el('div', { class: 'row' });
+    const paintPrev = () => preview.replaceChildren(...scriptureChips(scr.value));
+    scr.addEventListener('input', () => { f.scriptures = scr.value; paintPrev(); }); paintPrev();
+    const pages = inp('pages', 'mfPages', { placeholder: '1-32' });
+    const minister = inp('minister', 'mfMin', { list: 'ministerList', placeholder: s.author || 'BDH' });
+    const save = async e => {
+      e.preventDefault();
+      if (!f.date) { date.focus(); toast('Add the date of the meeting'); return; }
+      const body = { sourceId: s.id, type: f.type.trim() || 'Reading', place: f.place.trim(), date: f.date, scriptures: f.scriptures.trim(), pages: f.pages.trim(), minister: f.minister.trim() };
+      try {
+        if (f.id) await db.doc('meetings/' + f.id).update({ ...body, updatedAt: Date.now() });
+        else { const ref = db.collection('meetings').doc(); await ref.set({ ...body, createdAt: Date.now() }); ui.openMeet.add(ref.id); }
+        ui.meetForm = null; ui.editMeet = null; ui.addingMeet = false; toast(f.id ? 'Meeting saved' : `Added ${meetTitle(body)}`); refreshSermons(true);
+      } catch (err) { toast(writeError(err)); }
+    };
+    return el('form', { class: 'box', autocomplete: 'off', onsubmit: save, id: 'meetForm' },
+      el('h3', { text: f.id ? 'Edit meeting' : 'Add a meeting' }),
+      el('div', { class: 'grid2' }, el('div', { class: 'field' }, el('label', { for: 'mfType', text: 'Type of meeting' }), type), el('div', { class: 'field' }, el('label', { for: 'mfPlace', text: 'Place' }), place)),
+      el('div', { class: 'grid2' }, el('div', { class: 'field' }, el('label', { for: 'mfDate', text: 'Date' }), date, dayLbl), el('div', { class: 'field' }, el('label', { for: 'mfPages', text: 'Pages in the volume' }), pages)),
+      el('div', { class: 'field' }, el('label', { for: 'mfScr', text: 'Scriptures read' }), scr, preview),
+      el('div', { class: 'field' }, el('label', { for: 'mfMin', text: `Minister, if not ${s.author || 'the usual'}` }), minister),
+      el('div', { class: 'row', style: 'justify-content:flex-end' }, el('button', { class: 'btn ghost', type: 'button', text: 'Cancel', onclick: () => { ui.meetForm = null; ui.editMeet = null; ui.addingMeet = false; refreshSermons(true); } }), el('button', { class: 'btn primary', type: 'submit', text: f.id ? 'Save meeting' : 'Add meeting' })));
+  }
+
+  function meetingCard(s, m) {
+    const ns = S.notes.filter(n => n.meetingId === m.id).sort(byOld);
+    const det = el('details', { class: 'entry meeting', open: ui.openMeet.has(m.id) || null, id: 'meet-' + m.id });
+    det.addEventListener('toggle', () => { if (det.open) ui.openMeet.add(m.id); else ui.openMeet.delete(m.id); });
+    det.append(
+      el('summary', { class: 'entry-sum' },
+        el('span', { class: 'ew', text: meetTitle(m) }),
+        el('span', { class: 'ed', text: ministryDate(m.date) }),
+        ns.length ? el('span', { class: 'vc', text: plural(ns.length, 'note') }) : null),
+      el('div', { class: 'entry-body', style: 'gap:10px' },
+        m.scriptures ? el('div', { class: 'row' }, el('span', { class: 'lbl hint', text: 'Read:' }), scriptureChips(m.scriptures)) : null,
+        m.pages || m.minister ? el('p', { class: 'hint', style: 'margin:0', text: [m.pages ? `Pages ${m.pages}` : '', m.minister ? `Ministry by ${m.minister}` : ''].filter(Boolean).join(' · ') }) : null,
+        ns.length ? el('ul', { class: 'cards' }, ns.map(n => noteCard(n))) : null,
+        noteComposer('m' + m.id, s, m),
+        el('div', { class: 'row', style: 'justify-content:flex-end' },
+          el('button', { class: 'btn ghost', type: 'button', text: 'Edit meeting', onclick: () => { ui.meetForm = null; ui.editMeet = m.id; refreshSermons(true); $('meetForm')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); } }),
+          armBtn('Delete meeting', ns.length ? 'Delete it and its notes' : 'Confirm delete', async () => { try { for (const n of ns) await db.doc('notes/' + n.id).delete(); await db.doc('meetings/' + m.id).delete(); toast('Meeting deleted'); } catch (e) { toast(writeError(e)); } }))));
+    return el('li', {}, det);
+  }
+
+  function refreshSermons(full) {
+    if (!sideList?.isConnected) return;
+    fillDatalists();
+    if (ui.selected && !srcById(ui.selected)) { ui.selected = null; }
+    if (!ui.selected) { const f = sortedSources()[0]; if (f) ui.selected = f.id; }
+    sideList.replaceChildren(); let last = null;
+    for (const s of sortedSources()) {
+      const grp = isMinistry(s) ? (s.series || 'Ministry') : 'Other books';
+      if (grp !== last) { sideList.append(el('li', { class: 'group-label', text: grp })); last = grp; }
+      const nMeet = S.meetings.filter(x => x.sourceId === s.id).length, nNotes = S.notes.filter(x => x.sourceId === s.id).length;
+      sideList.append(el('li', {}, el('button', { class: 'item', type: 'button', 'aria-current': ui.selected === s.id ? 'true' : 'false', onclick: () => { ui.selected = s.id; ui.editing = null; ui.meetForm = null; ui.editMeet = null; ui.addingMeet = false; refreshSermons(true); } },
+        el('span', { class: 't', text: s.kind === 'ministry' ? (s.volume || s.title || 'Ministry') : s.title }),
+        el('span', { class: 'a', text: [s.author, isMinistry(s) && nMeet ? plural(nMeet, 'meeting') : '', s.kind === 'ministry' && s.title && s.volume ? s.title : ''].filter(Boolean).join(' · ') || ' ' }),
+        el('span', { class: 'n', text: nNotes }))));
+    }
+    const s = srcById(ui.selected);
+    if (!s) { main.replaceChildren(el('div', { class: 'empty' }, el('h3', { text: 'No ministry or books yet' }), el('p', { text: 'Press “+ Add” to add a ministry volume, such as White Book 1037 by BDH. Then add each meeting in it (Reading at Sydney, Lord’s Day 9 August 2026, and the scriptures read) and take notes on each one. Other books work too.' }))); return; }
+    const out = [];
+    out.push(el('div', { class: 'title-row' },
+      el('div', { class: 'panel', style: 'gap:4px' }, el('p', { class: 'eyebrow', text: isMinistry(s) ? `Ministry${s.author ? ' · ' + s.author : ''}` : 'Book' }), el('h2', { text: volName(s) }),
+        s.kind === 'ministry' && s.title ? el('span', { class: 'by', text: s.title }) : s.kind !== 'ministry' && s.author ? el('span', { class: 'by', text: s.author }) : null),
+      armBtn('Remove', 'Delete it and all its notes', async () => { try { for (const n of S.notes.filter(n => n.sourceId === s.id)) await db.doc('notes/' + n.id).delete(); for (const m of S.meetings.filter(m => m.sourceId === s.id)) await db.doc('meetings/' + m.id).delete(); await db.doc('sources/' + s.id).delete(); ui.selected = null; toast('Removed'); } catch (e) { toast(writeError(e)); } })));
+    if (isMinistry(s)) {
+      const ms = meetingsOf(s.id);
+      out.push(el('div', { class: 'row', style: 'justify-content:space-between' }, el('p', { class: 'eyebrow', text: ms.length ? plural(ms.length, 'meeting') : 'Meetings' }),
+        !ui.meetForm && !ui.editMeet ? el('button', { class: 'btn primary', type: 'button', text: '+ Add meeting', onclick: () => { ui.meetForm = null; ui.addingMeet = true; refreshSermons(true); setTimeout(() => $('mfType')?.focus(), 30); } }) : null));
+      if (ui.editMeet) { const em = S.meetings.find(m => m.id === ui.editMeet); if (em) { ui.meetForm = ui.meetForm || null; out.push(meetingForm(s, em)); } else ui.editMeet = null; }
+      else if (ui.addingMeet || ui.meetForm) out.push(meetingForm(s, null));
+      if (ms.length) out.push(el('ul', { class: 'cards' }, ms.map(m => meetingCard(s, m))));
+      else if (!ui.addingMeet && !ui.meetForm) out.push(el('div', { class: 'empty' }, el('p', { text: 'Add each meeting in this volume — for example “Reading at Sydney”, its date and the scriptures read. You can then note things against each meeting.' })));
+    }
+    const general = S.notes.filter(n => n.sourceId === s.id && !n.meetingId).sort(byNew);
+    out.push(el('div', { class: 'panel', style: 'gap:10px' },
+      el('p', { class: 'eyebrow', text: isMinistry(s) ? 'General notes on this volume' : plural(general.length, 'note') }),
+      el('div', { class: 'box' }, noteComposer('s' + s.id, s, null)),
+      general.length ? el('ul', { class: 'cards' }, general.map(n => noteCard(n))) : null));
+    main.replaceChildren(...out);
+  }
+
+  /* ---------- Search ---------- */
+  function drawAsk() {
+    const a = ui.ask;
+    const out = [el('div', { class: 'title-row' },
+      el('div', { class: 'panel', style: 'gap:4px' }, el('p', { class: 'eyebrow', text: a.tag ? 'Tagged' : 'Your notes on' }), el('h2', { text: a.tag ? '#' + a.tag : a.q })),
+      el('button', { class: 'btn', type: 'button', text: 'Back', onclick: () => { ui.ctl?.abort(); ui.ask = null; $('rdAsk').value = ''; draw(); } }))];
+    const all = S.notes;
+    if (a.tag) {
+      const hits = all.filter(n => (n.tags || []).includes(a.tag)).sort(byNew);
+      out.push(el('p', { class: 'eyebrow', text: plural(hits.length, 'note') }), hits.length ? el('ul', { class: 'cards' }, hits.map(n => noteCard(n, { showSource: true }))) : el('div', { class: 'empty' }, el('p', { text: 'No notes carry this tag.' })));
+      body.replaceChildren(...out); preload(hits); return;
+    }
+    const words = queryWords(a.q);
+    const byId = new Map(all.map(n => [n.id, n]));
+    const shown = new Set();
+    if (a.passage) {
+      const p = a.passage;
+      const ps = all.filter(n => n.kind === 'verse' && n.b === p.b && (!p.c || n.c === p.c) && (!p.v || n.v === p.v)).sort((x, y) => x.c - y.c || x.v - y.v || byOld(x, y));
+      ps.forEach(n => shown.add(n.id));
+      out.push(el('div', { class: 'row' }, el('button', { class: 'btn', type: 'button', text: `Open ${refOf(p.b, p.c || 1, p.v)} in the Bible`, onclick: () => goVerse(p.b, p.c || 1, p.v || 1) })));
+      if (ps.length) out.push(el('p', { class: 'eyebrow', text: `${plural(ps.length, 'note')} on ${refOf(p.b, p.c, p.v)}` }), el('ul', { class: 'cards' }, ps.map(n => noteCard(n, { showSource: true }))));
+      const hit = r => r.b === p.b && (!p.c || (r.c1 <= p.c && p.c <= r.c2)) && (!p.v || covers(r, p.b, p.c, p.v));
+      const reads = S.meetings.filter(m => parseRanges(m.scriptures).some(hit)).sort((x, y) => String(y.date).localeCompare(String(x.date)));
+      if (reads.length) out.push(el('p', { class: 'eyebrow', text: `Read in ${plural(reads.length, 'meeting')}` }), el('ul', { class: 'minlinks box' }, reads.map(m => { const src = srcById(m.sourceId); return el('li', {}, el('button', { class: 'src', type: 'button', onclick: () => openMinistry(m.sourceId, m.id) }, el('b', { text: src ? volName(src) : 'Ministry' }), ` · ${meetTitle(m)}, ${ministryDate(m.date)}`), el('span', { class: 'hint', text: ' — ' + m.scriptures })); })));
+      const mns = all.filter(n => n.kind !== 'verse' && n.scripture && parseRanges(n.scripture).some(hit));
+      mns.forEach(n => shown.add(n.id));
+      if (mns.length) out.push(el('p', { class: 'eyebrow', text: `Ministry notes referring to ${refOf(p.b, p.c, p.v)}` }), el('ul', { class: 'cards' }, mns.map(n => noteCard(n, { showSource: true }))));
+      preload(ps);
+    }
+    if (a.status === 'thinking') out.push(el('div', { class: 'box' }, el('div', { class: 'thinking' }, el('span', { class: 'dot' }), `Reading through ${plural(all.length, 'note')}…`, el('button', { class: 'btn ghost', type: 'button', text: 'Stop', onclick: () => ui.ctl?.abort() }))));
+    else if (a.status === 'done') {
+      if (a.summary) out.push(el('div', { class: 'box answer' }, el('p', { class: 'eyebrow', text: 'What your notes say' }), el('p', { text: a.summary })));
+      const picks = (a.matches || []).filter(m => byId.has(m.id) && !shown.has(m.id));
+      picks.forEach(m => shown.add(m.id));
+      if (picks.length) out.push(el('p', { class: 'eyebrow', text: plural(picks.length, 'relevant note') }), el('ul', { class: 'cards' }, picks.map(m => noteCard(byId.get(m.id), { showSource: true, words, why: m.why }))));
+      else if (!shown.size) out.push(el('div', { class: 'empty' }, el('h3', { text: 'Nothing on that yet' }), el('p', { text: 'None of your notes seem to touch on this. Try different words or a broader subject.' })));
+      preload(picks.map(m => byId.get(m.id)));
+    } else if (a.status === 'error') out.push(el('div', { class: 'box answer' }, el('p', { text: a.error })));
+    if (!a.passage) {
+      const exact = words.length ? all.filter(n => !shown.has(n.id) && words.some(w => [n.text, n.ref, n.scripture, n.author, (n.tags || []).join(' ')].join(' ').toLowerCase().includes(w))) : [];
+      if (exact.length) { out.push(el('p', { class: 'eyebrow', text: a.status === 'done' ? 'Other notes using your words' : 'Notes using your words' }), el('ul', { class: 'cards' }, exact.map(n => noteCard(n, { showSource: true, words })))); preload(exact); }
+      else if (!['thinking', 'done', 'error'].includes(a.status)) out.push(el('div', { class: 'empty' }, el('p', { text: 'No notes use those words.' })));
+    }
+    body.replaceChildren(...out);
+  }
+  function preload(ns) { const need = [...new Set(ns.filter(n => n && n.kind === 'verse' && !BOOKS[n.b]?.data).map(n => n.b))]; need.slice(0, 6).forEach(b => loadBook(b).then(() => { if (ui.ask && root?.isConnected) drawAsk(); }).catch(() => {})); }
+
+  async function runAsk(raw) {
+    const q = String(raw || '').trim(); if (!q) return;
+    $('rdAsk').value = q; ui.ctl?.abort(); ui.editing = null;
+    if (q.startsWith('#')) { ui.ask = { q, tag: parseTags(q)[0] || '' }; return draw(); }
+    const passage = parseRef(q);
+    if (passage && passage.c) {
+      // A plain reference like "John 3:16": go straight to the verse.
+      const hasNotes = S.notes.some(n => n.kind === 'verse' && n.b === passage.b && n.c === passage.c && (!passage.v || n.v === passage.v)) || S.meetings.some(m => parseRanges(m.scriptures).some(r => r.b === passage.b && r.c1 <= passage.c && passage.c <= r.c2));
+      if (passage.v || !hasNotes) return goVerse(passage.b, passage.c, passage.v || 1);
+    }
+    if (passage && !passage.c && /^\S+(\s\S+)?$/.test(q) && BIBLE.some(n => norm(n) === norm(q))) { ui.ask = { q, passage, status: 'none' }; return draw(); }
+    if (passage && passage.c) { ui.ask = { q, passage, status: 'none' }; return draw(); }
+    if (!S.notes.length) { ui.ask = { q, status: 'done', matches: [], summary: '' }; return draw(); }
+    if (!sample) { ui.ask = { q, status: 'fallback' }; return draw(); }
+    ui.ask = { q, status: 'thinking' }; draw();
+    const ctl = ui.ctl = new AbortController();
+    let corpus = '';
+    for (const n of S.notes) {
+      let src;
+      if (n.kind === 'verse') { const vt = cachedVerse(n.b, n.c, n.v); src = `Bible ${refOf(n.b, n.c, n.v)}${vt ? ' ("' + vt.slice(0, 160) + '")' : ''} — note by ${isMine(n.author) ? 'the reader' : n.author}`; }
+      else { const s = srcById(n.sourceId), mt = n.meetingId ? meetById(n.meetingId) : null;
+        src = s ? (isMinistry(s) ? `Ministry: ${volName(s)}${s.author ? ' (' + s.author + ')' : ''}${mt ? ' — ' + meetTitle(mt) + ', ' + ministryDate(mt.date) + (mt.scriptures ? ', scriptures read: ' + mt.scriptures : '') : ''}` : `Book "${s.title}"${s.author ? ' by ' + s.author : ''}`) : 'Unknown';
+        if (n.ref) src += ' — p. ' + n.ref; if (n.scripture) src += ' — refers to ' + n.scripture; }
+      const line = `[${n.id}] ${src}${n.tags?.length ? ' — tags: ' + n.tags.join(', ') : ''}\n${n.text}\n\n`;
+      if (corpus.length + line.length > 200000) break; corpus += line;
+    }
+    const prompt = `You are helping a Christian reader search their own notes: notes on Bible verses (J. N. Darby's translation), some their own and some copied from other writers and named, plus notes on ministry they have read (volumes such as the White Book series by BDH, each holding meetings like readings and preachings with the scriptures read) and books they read. Each note starts with its id in square brackets, then its source.\n\nThe reader asks: "${q}"\n\nFind every note genuinely relevant to this subject or question, including notes that treat it in different words or through a related passage. Order from most to least relevant. Leave out unrelated notes.\n\nReply with only JSON in this shape:\n{"summary": "2-3 sentences, addressed to the reader as 'you', on what the notes say about this, naming other writers where their notes are used. Empty string if nothing is relevant.", "matches": [{"id": "the note id", "why": "one short sentence on how this note relates"}]}\n\nNOTES:\n${corpus}`;
+    try {
+      const res = await sample.json(prompt, { signal: ctl.signal });
+      if (ctl !== ui.ctl) return;
+      const matches = Array.isArray(res?.matches) ? res.matches.filter(m => m && typeof m.id === 'string').map(m => ({ id: m.id, why: String(m.why || '') })) : [];
+      ui.ask = { q, status: 'done', matches, summary: typeof res?.summary === 'string' ? res.summary : '' };
+    } catch (e) {
+      if (ctl !== ui.ctl) return;
+      if (e?.code === 'cancelled') ui.ask = { q, status: 'fallback' };
+      else if (['not_granted', 'sampling_disabled', 'not_declared', 'capability_disabled', 'capability_removed'].includes(e?.code)) { sample = null; ui.ask = { q, status: 'error', error: 'Smart search isn’t available here, so these are the notes that use your exact words.' }; }
+      else if (e?.code === 'rate_limited') ui.ask = { q, status: 'error', error: 'You’ve searched a lot in a short time. Wait a minute and press Find again. Exact word matches are below.' };
+      else ui.ask = { q, status: 'error', error: 'The search didn’t finish. Press Find to try again. Exact word matches are below.' };
+    }
+    if (S.tab === 'reading' && root?.isConnected && ui.ask?.q === q) draw();
+  }
+
+  function refresh() {
+    if (!root?.isConnected) return;
+    if (ui.ask) { drawAsk(); return; }
+    if (ui.mode === 'bible') {
+      if (verseRows) verseRows.forEach(r => r.paint());
+      const g = $('chGrid'); if (g) [...g.children].forEach((btn, i) => btn.classList.toggle('has', chapterHas(ui.b, i + 1)));
+    } else refreshSermons(false);
+  }
+  function update() { refreshAuthors(); if (ui.editing && ui.mode !== 'bible' && !ui.ask) return; refresh(); }
+  return { mount, update };
+}
+
+/* ================= ENTERTAINING ================= */
+function Hosting() {
+  const now = new Date();
+  const ui = { month: new Date(now.getFullYear(), now.getMonth(), 1), day: todayIso(), form: 'meal', editing: null, person: '', filter: '', type: 'all', alloc: 'any', rating: 0, where: 'home', allocated: false };
+  let root, calEl, dayEl, formSlot, listEl, guestEl, personEl;
+  const stayEnd = s => iso(addDays(fromIso(s.arrive), Math.max(1, Number(s.nights) || 1)));
+  const staysOn = d => S.stays.filter(s => s.arrive && s.arrive <= d && d < stayEnd(s));
+  const mealsOn = d => S.meals.filter(m => m.date === d);
+  const isOut = m => m.kind === 'out';
+  const people = x => isOut(x) ? [x.host, ...(x.guests || [])].filter(Boolean) : (x.guests || []);
+  const entries = () => [
+    ...S.meals.map(m => ({ type: isOut(m) ? 'out' : 'meal', date: m.date || '', people: people(m), item: m })),
+    ...S.stays.map(s => ({ type: 'stay', date: s.arrive || '', people: s.guests || [], item: s }))];
+  const low = s => String(s || '').toLowerCase().trim();
+  const nameMatch = (name, q) => { const a = low(name), b = low(q); return !!b && (a === b || a.includes(b) || (b.length > 3 && b.includes(a) && a.length > 2)); };
+  const allNames = () => { const m = new Map(); for (const e of entries()) for (const p of e.people) if (!m.has(low(p))) m.set(low(p), p); return [...m.values()]; };
+  function personFromQuery(q) {
+    const t = low(q); if (!t) return '';
+    const known = allNames().filter(n => t.includes(low(n))).sort((a, b) => b.length - a.length);
+    if (known.length) return known[0];
+    const m = t.match(/(?:with|had|have|for|of|at|to)\s+(?:the\s+)?([a-z][\w' .-]+?)(?:\s+(?:for|over|to|round|a meal|meals?|stay|come).*)?\??$/i);
+    return (m ? m[1] : q).replace(/[?.!]+$/, '').trim();
+  }
+
+  function mount(v) {
+    root = v;
+    calEl = el('div', { class: 'cal' }); dayEl = el('div', { class: 'day-detail' });
+    formSlot = el('div'); listEl = el('div', { class: 'panel' }); guestEl = el('ul', { class: 'list' }); personEl = el('div', { class: 'panel' });
+    const ask = el('input', { id: 'hsAsk', type: 'search', list: 'guestNames', placeholder: 'How many times have we had the Smiths? When did we last eat with Ruth?', value: ui.person });
+    const askForm = el('form', { class: 'ask', autocomplete: 'off', onsubmit: e => { e.preventDefault(); ui.person = personFromQuery(ask.value); renderPerson(); renderGuests(); renderList(); personEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } },
+      ask, el('button', { class: 'btn primary', type: 'submit', text: 'Look up' }));
+    const search = el('input', { id: 'hsSearch', type: 'search', placeholder: 'Search dishes, purposes, notes…', value: ui.filter });
+    search.addEventListener('input', () => { ui.filter = search.value; renderList(); });
+    const segOf = (key, opts) => { const w = el('div', { class: 'seg', role: 'group' }); const draw = () => w.replaceChildren(...opts.map(([k, l]) => el('button', { type: 'button', 'aria-pressed': ui[key] === k ? 'true' : 'false', text: l, onclick: () => { ui[key] = k; draw(); renderList(); } }))); draw(); return w; };
+    v.append(el('div', { class: 'panel' },
+      el('div', { class: 'panel', style: 'gap:8px' }, askForm, el('p', { class: 'hint', text: 'Type a name or ask a question about someone to see every meal and stay with them: allocated and unallocated, meals out, and the dates.' })),
+      personEl,
+      el('div', { class: 'layout' },
+        el('aside', { class: 'side', 'aria-label': 'People' }, el('p', { class: 'eyebrow', text: 'People' }), guestEl),
+        el('div', { class: 'panel' },
+          el('div', { class: 'box' }, calEl, dayEl),
+          formSlot,
+          el('div', { class: 'panel', style: 'gap:10px' },
+            el('p', { class: 'eyebrow', text: 'All visits' }),
+            el('div', { class: 'row' }, segOf('type', [['all', 'All'], ['meal', 'We hosted'], ['out', 'Meals out'], ['stay', 'Stays']]), segOf('alloc', [['any', 'Any'], ['yes', 'Allocated'], ['no', 'Unallocated']])),
+            el('div', { class: 'field' }, el('label', { for: 'hsSearch', text: 'Search' }), search)),
+          listEl))));
+    buildForm(); update();
+  }
+
+  /* ---------- Person lookup ---------- */
+  function renderPerson() {
+    const q = ui.person;
+    if (!q) { personEl.replaceChildren(); return; }
+    const es = entries().filter(e => e.people.some(p => nameMatch(p, q))).sort((a, b) => b.date.localeCompare(a.date));
+    const matched = [...new Set(es.flatMap(e => e.people.filter(p => nameMatch(p, q))))];
+    const t = todayIso();
+    const hosted = es.filter(e => e.type === 'meal'), alloc = hosted.filter(e => e.item.allocated), unalloc = hosted.filter(e => !e.item.allocated);
+    const out = es.filter(e => e.type === 'out'), stays = es.filter(e => e.type === 'stay');
+    const lastMeal = es.find(e => e.type !== 'stay' && e.date <= t), next = [...es].reverse().find(e => e.date > t);
+    const group = (title, list) => list.length ? el('div', { class: 'panel', style: 'gap:6px' }, el('p', { class: 'eyebrow', text: `${title} · ${list.length}` }), el('ul', { class: 'cards' }, list.map(e => entryCard(e, { compact: true })))) : null;
+    personEl.replaceChildren(el('div', { class: 'box' },
+      el('div', { class: 'title-row' },
+        el('div', { class: 'panel', style: 'gap:2px' }, el('p', { class: 'eyebrow', text: 'Visits with' }), el('h2', { text: matched.length === 1 ? matched[0] : q }),
+          matched.length > 1 ? el('span', { class: 'hint', text: 'Includes: ' + matched.join(', ') }) : null),
+        el('button', { class: 'btn ghost', type: 'button', text: 'Clear', onclick: () => { ui.person = ''; $('hsAsk').value = ''; renderPerson(); renderGuests(); renderList(); } })),
+      es.length ? el('div', { class: 'summary-bar' },
+        el('div', { class: 'panel', style: 'gap:2px' }, el('p', { class: 'eyebrow', text: 'Had for meals' }), el('span', { class: 'big', text: hosted.length }), el('span', { class: 'hint', text: `${alloc.length} allocated · ${unalloc.length} unallocated` })),
+        el('div', { class: 'panel', style: 'gap:2px' }, el('p', { class: 'eyebrow', text: 'Meals out together' }), el('span', { class: 'big', text: out.length }), el('span', { class: 'hint', text: 'at their home or with them' })),
+        el('div', { class: 'panel', style: 'gap:2px' }, el('p', { class: 'eyebrow', text: 'Stays' }), el('span', { class: 'big', text: stays.length }), el('span', { class: 'hint', text: 'overnight' })),
+        el('div', { class: 'panel', style: 'gap:2px' }, el('p', { class: 'eyebrow', text: 'Last meal together' }), el('span', { class: 'big', style: 'font-size:1.4rem', text: lastMeal ? niceDate(lastMeal.date) : '—' }), el('span', { class: 'hint', text: lastMeal ? (lastMeal.type === 'out' ? `Out, at ${lastMeal.item.host}’s` : `At home, ${lastMeal.item.allocated ? 'allocated' : 'unallocated'}`) : 'none yet' })))
+        : el('p', { class: 'hint', text: `No meals or stays recorded with anyone matching “${q}”.` }),
+      next ? el('p', { class: 'hint', text: `Next: ${dayDate(next.date)} — ${next.type === 'stay' ? 'coming to stay' : next.type === 'out' ? 'meal out' : 'coming for a meal'}.` }) : null,
+      group('Allocated meals', alloc), group('Unallocated meals', unalloc), group('Meals out', out), group('Stays', stays)));
+  }
+
+  /* ---------- Calendar ---------- */
+  function renderCal() {
+    const m = ui.month, t = todayIso();
+    const first = new Date(m.getFullYear(), m.getMonth(), 1);
+    const start = addDays(first, -((first.getDay() + 6) % 7));
+    const cells = [];
+    for (let i = 0; i < 42; i++) {
+      const d = addDays(start, i); const k = iso(d);
+      if (i >= 35 && d.getMonth() !== m.getMonth()) break;
+      const st = staysOn(k), ml = mealsOn(k);
+      cells.push(el('button', { class: 'cal-day' + (d.getMonth() !== m.getMonth() ? ' other' : '') + (k === t ? ' today' : ''), type: 'button', 'aria-pressed': ui.day === k ? 'true' : 'false',
+        'aria-label': `${dayDate(k)}${st.length ? ', ' + plural(st.length, 'stay') : ''}${ml.length ? ', ' + plural(ml.length, 'meal') : ''}`, onclick: () => { ui.day = k; renderCal(); renderDay(); syncFormDate(); } },
+        el('span', { class: 'num', text: d.getDate() }),
+        st.map(s => el('span', { class: 'pill stay', text: (s.arrive === k ? '' : '· ') + (s.guests || []).join(', ') })),
+        ml.map(x => el('span', { class: 'pill meal' + (isOut(x) ? ' out' : ''), text: isOut(x) ? `At ${x.host}’s` : (x.guests || []).join(', ') }))));
+    }
+    calEl.replaceChildren(
+      el('div', { class: 'cal-head' },
+        el('h3', { text: `${MONTHS_L[m.getMonth()]} ${m.getFullYear()}` }),
+        el('div', { class: 'row' },
+          el('button', { class: 'btn', type: 'button', text: '‹', 'aria-label': 'Previous month', onclick: () => { ui.month = new Date(m.getFullYear(), m.getMonth() - 1, 1); renderCal(); } }),
+          el('button', { class: 'btn', type: 'button', text: 'Today', onclick: () => { const n = new Date(); ui.month = new Date(n.getFullYear(), n.getMonth(), 1); ui.day = todayIso(); renderCal(); renderDay(); syncFormDate(); } }),
+          el('button', { class: 'btn', type: 'button', text: '›', 'aria-label': 'Next month', onclick: () => { ui.month = new Date(m.getFullYear(), m.getMonth() + 1, 1); renderCal(); } }))),
+      el('div', { class: 'cal-grid' }, ['Mo','Tu','We','Th','Fr','Sa','Su'].map(d => el('span', { class: 'cal-dow', text: d })), cells),
+      el('div', { class: 'legend' }, el('span', { class: 'pill stay', text: 'Overnight stay' }), el('span', { class: 'pill meal', text: 'We hosted' }), el('span', { class: 'pill meal out', text: 'Meal out' }), el('span', { text: 'Tap a day to see it or add to it — past or future.' })));
+  }
+  function renderDay() {
+    const k = ui.day, st = staysOn(k), ml = mealsOn(k), future = k > todayIso();
+    dayEl.replaceChildren(
+      el('div', { class: 'title-row' }, el('div', { class: 'panel', style: 'gap:2px' }, el('p', { class: 'eyebrow', text: k === todayIso() ? 'Today' : future ? 'Coming up' : 'Past' }), el('h3', { text: dayDate(k) + (fromIso(k).getFullYear() !== new Date().getFullYear() ? ' ' + fromIso(k).getFullYear() : '') })),
+        el('div', { class: 'row' },
+          el('button', { class: 'btn', type: 'button', text: '+ Meal', onclick: () => openForm('meal', 'home') }),
+          el('button', { class: 'btn', type: 'button', text: '+ Meal out', onclick: () => openForm('meal', 'out') }),
+          el('button', { class: 'btn', type: 'button', text: '+ Stay', onclick: () => openForm('stay') }))),
+      st.length || ml.length ? el('ul', { class: 'cards' }, [...st.map(s => entryCard({ type: 'stay', date: s.arrive, item: s }, { open: true })), ...ml.map(m => entryCard({ type: isOut(m) ? 'out' : 'meal', date: m.date, item: m }, { open: true }))])
+        : el('p', { class: 'hint', text: future ? 'Nothing planned. Add a meal or stay to book it in.' : 'Nothing recorded on this day.' }));
+  }
+  function openForm(type, where) { ui.form = type; if (where) ui.where = where; ui.editing = null; buildForm(); formSlot.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  function syncFormDate() { if (ui.editing) return; const f = $(ui.form === 'stay' ? 'stArrive' : 'mlDate'); if (f) f.value = ui.day; }
+
+  /* ---------- Forms ---------- */
+  function stars(get, set) {
+    const wrap = el('div', { class: 'star-input', role: 'radiogroup', 'aria-label': 'How it went overall' });
+    const draw = () => wrap.replaceChildren(...[1,2,3,4,5].map(i => el('button', { type: 'button', class: i <= get() ? 'on' : '', role: 'radio', 'aria-checked': i === get() ? 'true' : 'false', 'aria-label': `${i} of 5`, text: '★', onclick: () => { set(get() === i ? 0 : i); draw(); } })));
+    draw(); return wrap;
+  }
+  function buildForm() {
+    const ed = ui.editing ? (ui.form === 'stay' ? S.stays : S.meals).find(x => x.id === ui.editing) : null;
+    if (ui.editing && !ed) ui.editing = null;
+    if (ed) { ui.rating = ed.rating || 0; if (ui.form === 'meal') { ui.where = isOut(ed) ? 'out' : 'home'; ui.allocated = !!ed.allocated; } }
+    const seg = ed ? null : el('div', { class: 'seg', role: 'group', 'aria-label': 'What to add' },
+      el('button', { type: 'button', 'aria-pressed': ui.form === 'meal' && ui.where === 'home' ? 'true' : 'false', text: 'We hosted a meal', onclick: () => { ui.form = 'meal'; ui.where = 'home'; buildForm(); } }),
+      el('button', { type: 'button', 'aria-pressed': ui.form === 'meal' && ui.where === 'out' ? 'true' : 'false', text: 'We went out for a meal', onclick: () => { ui.form = 'meal'; ui.where = 'out'; buildForm(); } }),
+      el('button', { type: 'button', 'aria-pressed': ui.form === 'stay' ? 'true' : 'false', text: 'Overnight stay', onclick: () => { ui.form = 'stay'; buildForm(); } }));
+    let f;
+    const footer = label => el('div', { class: 'row', style: 'justify-content:space-between' },
+      el('div', { class: 'row' }, el('span', { class: 'hint', text: 'How it went overall' }), stars(() => ui.rating, r => ui.rating = r)),
+      el('div', { class: 'row' }, ed ? el('button', { class: 'btn ghost', type: 'button', text: 'Cancel', onclick: () => { ui.editing = null; ui.rating = 0; buildForm(); } }) : null, el('button', { class: 'btn primary', type: 'submit', text: label })));
+    const afterSave = (date, msg) => { toast(msg); ui.editing = null; ui.rating = 0; ui.day = date; const d = fromIso(date); ui.month = new Date(d.getFullYear(), d.getMonth(), 1); buildForm(); update(); };
+    if (ui.form === 'stay') {
+      const arrive = el('input', { id: 'stArrive', type: 'date', value: ed?.arrive || ui.day });
+      const nights = el('input', { id: 'stNights', type: 'number', min: 1, max: 60, value: ed?.nights || 1, inputmode: 'numeric' });
+      const guests = el('input', { id: 'stGuests', placeholder: 'The Browns, Mr and Mrs Hill', value: (ed?.guests || []).join(', '), list: 'guestNames' });
+      const purpose = el('input', { id: 'stPurpose', placeholder: 'Passing through for the meetings, visiting family…', value: ed?.purpose || '' });
+      const tea = el('textarea', { id: 'stTea', rows: 2, placeholder: 'Shepherd’s pie and apple crumble\n(one line per night if it varied)', value: ed?.tea || '' });
+      const went = el('textarea', { id: 'stWent', rows: 2, placeholder: 'Lovely visit. He prefers tea to coffee; she has a nut allergy…', value: ed?.went || '' });
+      f = el('form', { class: 'box', autocomplete: 'off', onsubmit: async e => {
+        e.preventDefault();
+        const g = splitList(guests.value); if (!g.length) { guests.focus(); toast('Add who is staying'); return; }
+        if (!arrive.value) { arrive.focus(); return; }
+        const body = { arrive: arrive.value, nights: Math.max(1, Math.min(60, Number(nights.value) || 1)), guests: g, purpose: purpose.value.trim(), tea: tea.value.trim(), went: went.value.trim(), rating: ui.rating };
+        try {
+          if (ed) await db.doc('stays/' + ed.id).update({ ...body, updatedAt: Date.now() }); else await db.collection('stays').doc().set({ ...body, createdAt: Date.now() });
+          afterSave(body.arrive, ed ? 'Stay saved' : body.arrive > todayIso() ? `Booked in for ${niceDate(body.arrive)}` : 'Stay recorded');
+        } catch (err) { toast(writeError(err)); }
+      } }, seg, el('h3', { text: ed ? 'Edit stay' : 'Overnight stay' }),
+        el('div', { class: 'grid2' }, el('div', { class: 'field' }, el('label', { for: 'stArrive', text: 'Arriving' }), arrive), el('div', { class: 'field' }, el('label', { for: 'stNights', text: 'Nights' }), nights)),
+        el('div', { class: 'field' }, el('label', { for: 'stGuests', text: 'Who is staying (comma separated)' }), guests),
+        el('div', { class: 'field' }, el('label', { for: 'stPurpose', text: 'Purpose of the visit' }), purpose),
+        el('div', { class: 'field' }, el('label', { for: 'stTea', text: 'What they had for tea' }), tea),
+        el('div', { class: 'field' }, el('label', { for: 'stWent', text: 'How it went (fill in afterwards)' }), went),
+        footer(ed ? 'Save' : 'Save stay'));
+    } else {
+      const out = ui.where === 'out';
+      const date = el('input', { id: 'mlDate', type: 'date', value: ed?.date || ui.day });
+      const occ = el('input', { id: 'mlOcc', placeholder: 'Sunday lunch, tea…', value: ed?.occasion || '', list: 'occasions' });
+      const host = out ? el('input', { id: 'mlHost', placeholder: 'The Wilsons', value: ed?.host || '', list: 'guestNames' }) : null;
+      const guests = el('input', { id: 'mlGuests', placeholder: out ? 'The Grants, Peter (leave blank if it was just us)' : 'The Smiths, Uncle Peter, Ruth', value: (ed?.guests || []).join(', '), list: 'guestNames' });
+      const menu = el('textarea', { id: 'mlMenu', rows: 3, placeholder: 'One dish per line\nRoast lamb with rosemary\nPavlova', value: (ed?.menu || []).join('\n') });
+      const went = el('textarea', { id: 'mlWent', rows: 2, placeholder: out ? 'Lovely evening. Their roast potatoes were superb…' : 'Great conversation, the lamb was a bit dry, Ruth is vegetarian…', value: ed?.went || '' });
+      const allocSeg = out ? null : el('div', { class: 'seg', role: 'radiogroup', 'aria-label': 'Allocated or unallocated' });
+      const drawAlloc = () => allocSeg?.replaceChildren(
+        el('button', { type: 'button', role: 'radio', 'aria-pressed': ui.allocated ? 'true' : 'false', 'aria-checked': ui.allocated ? 'true' : 'false', text: 'Allocated', onclick: () => { ui.allocated = true; drawAlloc(); } }),
+        el('button', { type: 'button', role: 'radio', 'aria-pressed': !ui.allocated ? 'true' : 'false', 'aria-checked': !ui.allocated ? 'true' : 'false', text: 'Unallocated', onclick: () => { ui.allocated = false; drawAlloc(); } }));
+      drawAlloc();
+      f = el('form', { class: 'box', autocomplete: 'off', onsubmit: async e => {
+        e.preventDefault();
+        const g = splitList(guests.value);
+        if (out && !host.value.trim()) { host.focus(); toast('Add whose home you went to'); return; }
+        if (!out && !g.length) { guests.focus(); toast('Add at least one guest'); return; }
+        const body = { kind: out ? 'out' : 'home', date: date.value || ui.day, occasion: occ.value.trim(), guests: g, menu: menu.value.split('\n').map(s => s.trim()).filter(Boolean), went: went.value.trim(), rating: ui.rating };
+        if (out) { body.host = host.value.trim(); body.allocated = false; } else { body.host = ''; body.allocated = ui.allocated; }
+        try {
+          if (ed) await db.doc('meals/' + ed.id).update({ ...body, updatedAt: Date.now() }); else await db.collection('meals').doc().set({ ...body, createdAt: Date.now() });
+          afterSave(body.date, ed ? 'Meal saved' : 'Meal logged');
+        } catch (err) { toast(writeError(err)); }
+      } }, seg, el('h3', { text: ed ? 'Edit meal' : out ? 'Meal out' : 'Meal we hosted' }),
+        el('div', { class: 'grid2' }, el('div', { class: 'field' }, el('label', { for: 'mlDate', text: 'Date' }), date), el('div', { class: 'field' }, el('label', { for: 'mlOcc', text: 'Occasion' }), occ)),
+        out ? el('div', { class: 'field' }, el('label', { for: 'mlHost', text: 'Whose home (who hosted us)' }), host)
+            : el('div', { class: 'field' }, el('span', { class: 'lbl', text: 'Allocated or unallocated' }), allocSeg),
+        el('div', { class: 'field' }, el('label', { for: 'mlGuests', text: out ? 'Who else was there (comma separated)' : 'Who came (comma separated)' }), guests),
+        el('div', { class: 'field' }, el('label', { for: 'mlMenu', text: out ? 'What we had' : 'What you served' }), menu),
+        el('div', { class: 'field' }, el('label', { for: 'mlWent', text: 'How it went' }), went),
+        footer(ed ? 'Save' : out ? 'Save meal out' : 'Log meal'));
+    }
+    formSlot.replaceChildren(f);
+  }
+
+  /* ---------- Entry card (expandable) ---------- */
+  function dateBlock(s) { const d = fromIso(s); return el('div', { class: 'meal-date' }, el('span', { class: 'd', text: d.getDate() }), el('span', { class: 'm', text: `${MONTHS[d.getMonth()]} ${String(d.getFullYear()).slice(2)}` })); }
+  const guestChips = gs => gs.map(g => el('button', { class: 'chip', type: 'button', text: g, onclick: e => { e.preventDefault(); ui.person = g; $('hsAsk').value = g; renderPerson(); renderGuests(); renderList(); personEl.scrollIntoView({ behavior: 'smooth', block: 'start' }); } }));
+  function entryCard(e, opts = {}) {
+    const x = e.item, future = e.date > todayIso();
+    const typeBadge = e.type === 'stay' ? el('span', { class: 'entry-type stay', text: 'Stay' })
+      : e.type === 'out' ? el('span', { class: 'entry-type out', text: 'Meal out' })
+      : el('span', { class: 'entry-type meal', text: x.allocated ? 'Allocated' : 'Unallocated' });
+    const who = e.type === 'out' ? `At ${x.host}’s${x.guests?.length ? ' · with ' + x.guests.join(', ') : ''}` : (x.guests || []).join(', ');
+    const line = e.type === 'stay' ? `${future ? 'Staying' : 'Stayed'} ${plural(Number(x.nights) || 1, 'night')}` : (x.occasion || '');
+    const sum = el('summary', { class: 'entry-sum' },
+      el('span', { class: 'ed', text: niceDate(e.date) }), typeBadge, future ? el('span', { class: 'soon', text: 'Coming up' }) : null,
+      el('span', { class: 'ew', text: who }), line ? el('span', { class: 'occ', text: line }) : null);
+    const detail = el('div', { class: 'entry-body' },
+      el('div', { class: 'meal-guests' },
+        e.type === 'out' ? [el('span', { class: 'occ', text: 'Hosted by' }), guestChips([x.host]), x.guests?.length ? el('span', { class: 'occ', text: 'with' }) : null] : el('span', { class: 'occ', text: e.type === 'stay' ? 'Staying:' : 'Guests:' }),
+        guestChips(x.guests || []),
+        x.rating ? el('span', { class: 'stars', style: 'margin-left:auto', 'aria-label': `${x.rating} of 5`, text: '★'.repeat(x.rating) }) : null),
+      e.type === 'stay' ? el('p', { class: 'hint', text: `${dayDate(x.arrive)} to ${dayDate(stayEnd(x))}` }) : null,
+      x.purpose ? el('p', { class: 'went purpose', text: x.purpose }) : null,
+      x.tea ? el('p', { class: 'went tea', text: x.tea }) : null,
+      x.menu?.length ? el('ul', { class: 'menu' }, x.menu.map(d => el('li', { text: d }))) : null,
+      x.went ? el('p', { class: 'went', text: x.went }) : null,
+      el('div', { class: 'row', style: 'justify-content:flex-end' },
+        el('button', { class: 'btn ghost', type: 'button', text: 'Edit', onclick: () => { ui.form = e.type === 'stay' ? 'stay' : 'meal'; ui.editing = x.id; buildForm(); formSlot.scrollIntoView({ behavior: 'smooth', block: 'start' }); } }),
+        armBtn('Delete', 'Confirm delete', async () => { try { await db.doc((e.type === 'stay' ? 'stays/' : 'meals/') + x.id).delete(); toast('Deleted'); } catch (err) { toast(writeError(err)); } })));
+    return el('li', {}, el('details', { class: 'entry', open: !!opts.open }, sum, detail));
+  }
+
+  /* ---------- People & list ---------- */
+  function renderGuests() {
+    const m = new Map(), t = todayIso();
+    for (const e of entries()) for (const p of e.people) {
+      const k = low(p); const cur = m.get(k) || { name: p, n: 0, last: '', next: '' };
+      cur.n++; if (e.date <= t && e.date > cur.last) cur.last = e.date; if (e.date > t && (!cur.next || e.date < cur.next)) cur.next = e.date; m.set(k, cur);
+    }
+    const gi = [...m.values()].sort((a, b) => (b.next ? 1 : 0) - (a.next ? 1 : 0) || b.last.localeCompare(a.last) || a.name.localeCompare(b.name));
+    guestEl.replaceChildren(
+      gi.length ? null : el('li', { class: 'hint', text: 'Everyone you have for meals, eat with, or have to stay will be listed here.' }),
+      gi.map(g => el('li', {}, el('button', { class: 'item guest-btn', type: 'button', 'aria-current': ui.person && low(ui.person) === low(g.name) ? 'true' : 'false', onclick: () => { ui.person = g.name; $('hsAsk').value = g.name; renderPerson(); renderGuests(); renderList(); personEl.scrollIntoView({ behavior: 'smooth', block: 'start' }); } },
+        el('span', { class: 't', text: g.name }), el('span', { class: 'a', text: g.next ? 'Coming ' + niceDate(g.next) : g.last ? 'Last: ' + niceDate(g.last) : '' }), el('span', { class: 'n', text: g.n })))));
+    const dl = $('guestNames'); if (dl) dl.replaceChildren(...gi.map(g => el('option', { value: g.name })));
+  }
+  function renderList() {
+    let es = entries().sort((a, b) => b.date.localeCompare(a.date) || byNew(a.item, b.item));
+    if (ui.type !== 'all') es = es.filter(e => e.type === ui.type);
+    if (ui.alloc !== 'any') es = es.filter(e => e.type === 'meal' && !!e.item.allocated === (ui.alloc === 'yes'));
+    if (ui.person) es = es.filter(e => e.people.some(p => nameMatch(p, ui.person)));
+    const f = low(ui.filter);
+    if (f) es = es.filter(e => { const x = e.item; return [x.occasion, x.purpose, x.tea, x.host, (x.menu || []).join(' '), x.went, e.people.join(' ')].join(' ').toLowerCase().includes(f); });
+    const t = todayIso(), out = [];
+    const upcoming = es.filter(e => e.date > t).reverse(), past = es.filter(e => e.date <= t);
+    const label = [ui.type === 'meal' ? 'meals we hosted' : ui.type === 'out' ? 'meals out' : ui.type === 'stay' ? 'stays' : 'visits', ui.alloc === 'yes' ? '(allocated)' : ui.alloc === 'no' ? '(unallocated)' : '', ui.person ? `with ${ui.person}` : ''].filter(Boolean).join(' ');
+    if (upcoming.length) out.push(el('p', { class: 'eyebrow', text: 'Coming up' }), el('ul', { class: 'cards' }, upcoming.map(e => entryCard(e))));
+    if (past.length) out.push(el('p', { class: 'eyebrow', text: `${past.length} ${label}${upcoming.length ? ' so far' : ''}` }), el('ul', { class: 'cards' }, past.map(e => entryCard(e))));
+    if (!es.length) out.push(el('div', { class: 'empty' }, el('h3', { text: S.meals.length + S.stays.length ? 'Nothing matches' : 'No visits recorded yet' }),
+      el('p', { text: S.meals.length + S.stays.length ? 'Try another filter, name or word.' : 'Log who came for a meal (allocated or unallocated), meals you’ve been out to, or book in someone coming to stay — even weeks ahead.' })));
+    listEl.replaceChildren(...out);
+  }
+  function update() { if (!root?.isConnected) return; renderCal(); renderDay(); renderGuests(); renderPerson(); renderList(); }
+  return { mount, update };
+}
+/* ================= FITNESS: my plan (from plan.json) ================= */
+let PLAN = null, planErr = false;
+const planReady = fetch('plan.json', { cache: 'no-cache' }).then(r => { if (!r.ok) throw 0; return r.json(); })
+  .then(p => { PLAN = p; dataChanged(); }).catch(() => { planErr = true; dataChanged(); });
+
+function MyPlan() {
+  let root;
+  const DOW = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const startDate = () => Store.get('settings/plan')?.startDate || PLAN?.startDate || todayIso();
+  function weekNo() {
+    const s = fromIso(startDate()), t = fromIso(todayIso());
+    return Math.floor(Math.round((t - s) / 86400000) / 7) + 1;
+  }
+  const phaseFor = w => (PLAN.phases || []).find(p => w >= p.from && w <= p.to);
+  const dayByLabel = l => (PLAN.days || []).find(d => d.label === l);
+  const logBtn = (d, primary) => el('button', { class: 'btn' + (primary ? ' primary' : ' ghost'), type: 'button', style: 'align-self:flex-start', text: primary ? `Log ${d.label}` : 'Log this workout',
+    onclick: () => window.FIT_HOOK.log({ label: d.label, focus: '', exercises: d.exercises.map(e => ({ name: e.name, prescription: e.prescription, start: e.start })) }, '') });
+  const exList = items => el('ul', { class: 'ex' }, items.map(e => el('li', {},
+    el('span', { class: 'nm', text: (e.id ? e.id + '  ' : '') + e.name }),
+    el('span', { class: 'rx', text: e.prescription + (e.start && e.start !== 'bodyweight' ? ` · ${e.start}` : e.start === 'bodyweight' ? ' · BW' : '') }),
+    e.notes ? el('span', { class: 'tip', text: e.notes }) : null, howTo(e.name))));
+  const section = (title, open, ...kids) => el('details', { class: 'howto', style: 'font-size:.95rem', open: open || null }, el('summary', { text: title }), el('div', { class: 'panel', style: 'gap:10px;padding:8px 0 4px 16px' }, ...kids));
+  function mount(v) { root = el('div', { class: 'panel', style: 'gap:20px' }); v.append(root); draw(); }
+  function draw() {
+    if (!root?.isConnected) return;
+    if (!PLAN) { root.replaceChildren(planErr ? el('div', { class: 'empty' }, el('h3', { text: 'Your plan didn’t load' }), el('p', { text: 'Connect to the internet once and open Fitness again.' })) : el('div', { class: 'thinking' }, el('span', { class: 'dot' }), 'Loading your plan…')); return; }
+    const w = weekNo(), total = PLAN.weeks || 12, ph = phaseFor(w);
+    const todayRow = (PLAN.schedule || []).find(s => s.dow === new Date().getDay());
+    const todayDay = todayRow?.session ? dayByLabel(todayRow.session) : null;
+    const start = el('input', { type: 'date', value: startDate(), style: 'max-width:180px' });
+    start.addEventListener('change', async () => { if (!start.value) return; try { await localDb.doc('settings/plan').set({ startDate: start.value, updatedAt: Date.now() }); draw(); toast('Start date saved'); } catch (e) { toast(writeError(e)); } });
+    const status = w < 1 ? `Starts ${dayDate(startDate())}` : w > total ? `Finished — all ${total} weeks done` : `Week ${w} of ${total}${ph ? ' · ' + ph.title : ''}`;
+    root.replaceChildren(
+      el('div', { class: 'title-row' },
+        el('div', { class: 'panel', style: 'gap:4px' }, el('p', { class: 'eyebrow', text: 'Your plan' }), el('h2', { text: PLAN.name }), el('span', { class: 'by', text: PLAN.summary }))),
+      el('div', { class: 'empty', style: 'border-style:solid;color:var(--ink);background:var(--card);gap:10px' },
+        el('p', { class: 'eyebrow', text: status }),
+        w >= 1 && w <= total && ph ? el('p', { text: ph.text }) : null,
+        el('h3', { text: todayDay ? `Today: ${todayDay.label}` : `Today: ${todayRow?.focus || 'Rest'}` }),
+        todayDay ? el('p', { class: 'hint', text: todayRow.focus }) : null,
+        todayDay ? logBtn(todayDay, true) : null,
+        w >= 1 && w <= total ? el('div', { class: 'row', style: 'gap:4px' }, Array.from({ length: total }, (_, i) => el('span', { class: 'badge' + (i + 1 < w ? ' fit' : ''), style: i + 1 === w ? 'background:var(--stamp);color:var(--card);border-color:var(--stamp)' : '', title: `Week ${i + 1}: ${phaseFor(i + 1)?.title || ''}`, text: String(i + 1) }))) : null),
+      el('div', { class: 'panel', style: 'gap:8px' }, el('h3', { text: 'This week' }),
+        el('ul', { class: 'ex' }, [1, 2, 3, 4, 5, 6, 0].map(d => (PLAN.schedule || []).find(s => s.dow === d)).filter(Boolean).map(s => el('li', { style: s.dow === new Date().getDay() ? 'background:var(--stamp-soft);padding-inline:8px;border-radius:6px' : '' },
+          el('span', { class: 'nm', text: `${DOW[s.dow].slice(0, 3)} — ${s.session || s.focus}` }), s.session ? el('span', { class: 'tip', style: 'grid-column:auto', text: s.focus }) : null))),
+        PLAN.missedDays ? el('p', { class: 'hint', text: PLAN.missedDays }) : null),
+      section(`${PLAN.warmup.title} (${PLAN.warmup.minutes} min, before every session)`, false, el('p', { class: 'hint', text: PLAN.warmup.intro }), exList(PLAN.warmup.items)),
+      el('div', { class: 'panel', style: 'gap:10px' }, el('h3', { text: 'The four workouts' }), el('p', { class: 'hint', text: PLAN.workoutsIntro }),
+        el('div', { class: 'plan-days' }, PLAN.days.map(d => el('div', { class: 'day', style: todayDay === d ? 'border-color:var(--stamp)' : '' },
+          el('div', { class: 'row', style: 'justify-content:space-between' }, el('p', { class: 'eyebrow', text: d.day }), todayDay === d ? el('span', { class: 'badge fit', text: 'Today' }) : null),
+          el('h4', { text: d.label }), logBtn(d, false), exList(d.exercises),
+          d.note ? el('p', { class: 'hint', text: d.note }) : null))),
+        PLAN.supersetNote ? el('p', { class: 'hint', text: PLAN.supersetNote }) : null),
+      section('How to progress', false, el('p', { text: PLAN.progression.rule }),
+        el('ul', { class: 'tip-list', style: 'color:var(--ink)' }, PLAN.progression.items.map(([a, b]) => el('li', {}, el('b', { text: a + ': ' }), b)))),
+      section('The 12 weeks', false,
+        el('ul', { class: 'tip-list', style: 'color:var(--ink)' }, PLAN.phases.map(p => el('li', { style: ph === p && w >= 1 && w <= total ? 'font-weight:600' : '' }, el('b', { text: `Week${p.from === p.to ? ' ' + p.from : 's ' + p.from + '–' + p.to}, ${p.title.toLowerCase()}: ` }), p.text))),
+        PLAN.photos ? el('p', { class: 'hint', text: PLAN.photos }) : null,
+        el('div', { class: 'field', style: 'max-width:220px' }, el('label', { text: 'Week 1 started on' }), start)),
+      section('Recovery, nutrition and tracking', false,
+        el('ul', { class: 'tip-list', style: 'color:var(--ink)' }, PLAN.recovery.map(([a, b]) => el('li', {}, el('b', { text: a + ': ' }), b)))));
+  }
+  return { mount, update: draw };
+}
+
+/* ================= TRAINING: custom workouts, logging, progression, PBs ================= */
+function Training() {
+  const ui = { mode: 'workouts', build: null, log: null, sel: null, openSession: null };
+  let root;
+  const key = n => String(n || '').toLowerCase().replace(/\s+/g, ' ').trim();
+  const num = v => { const n = parseFloat(String(v).replace(',', '.')); return isFinite(n) && n >= 0 ? n : 0; };
+  const fmtW = w => (Math.round(w * 100) / 100).toString();
+  const e1rm = (w, r) => w > 0 && r > 0 ? w * (1 + Math.min(r, 15) / 30) : 0;
+  const repsTarget = s => { const m = String(s || '').match(/(\d+)\s*(?:[–-]\s*(\d+))?/); return m ? Number(m[2] || m[1]) : 0; };
+  function parseRx(rx) { const m = String(rx || '').match(/(\d+)\s*[×x]\s*(\d+(?:\s*[–-]\s*\d+)?)/i); return m ? { sets: Number(m[1]), reps: m[2].replace(/\s/g, '') } : { sets: 3, reps: '' }; }
+  const sessionsSorted = () => [...S.sessions].sort((a, b) => String(a.date).localeCompare(String(b.date)) || byOld(a, b));
+  function history(name) {
+    const k = key(name), out = [];
+    for (const s of sessionsSorted()) for (const e of s.entries || []) if (key(e.name) === k && (e.sets || []).length) out.push({ date: s.date, session: s, sets: e.sets });
+    return out;
+  }
+  function statsFor(name) {
+    const h = history(name); if (!h.length) return null;
+    let bestW = null, bestR = null, best1 = null;
+    for (const x of h) for (const st of x.sets) {
+      const w = num(st.w), r = num(st.r);
+      if (w > 0 && (!bestW || w > bestW.w || (w === bestW.w && r > bestW.r))) bestW = { w, r, date: x.date };
+      if (r > 0 && (!bestR || r > bestR.r || (r === bestR.r && w > bestR.w))) bestR = { w, r, date: x.date };
+      const e = e1rm(w, r); if (e && (!best1 || e > best1.e)) best1 = { e, w, r, date: x.date };
+    }
+    return { name: h[h.length - 1].sets ? name : name, h, bestW, bestR, best1, last: h[h.length - 1] };
+  }
+  function allExercises() {
+    const m = new Map();
+    for (const s of S.sessions) for (const e of s.entries || []) if ((e.sets || []).length) { const k = key(e.name); if (!m.has(k)) m.set(k, e.name); }
+    return [...m.values()].map(statsFor).filter(Boolean).sort((a, b) => String(b.last.date).localeCompare(String(a.last.date)));
+  }
+  const setStr = sets => sets.map(st => num(st.w) > 0 ? `${fmtW(num(st.w))} kg × ${num(st.r)}` : `${num(st.r)} reps`).join(', ');
+  function suggestion(name, targetReps) {
+    const h = history(name); if (!h.length) return null;
+    const last = h[h.length - 1].sets.map(st => ({ w: num(st.w), r: num(st.r) }));
+    const t = repsTarget(targetReps) || Math.max(...last.map(s => s.r));
+    const topW = Math.max(...last.map(s => s.w));
+    const working = last.filter(s => s.w === topW);
+    const allHit = working.every(s => s.r >= t);
+    if (topW > 0) {
+      const step = topW >= 40 ? 2.5 : topW >= 10 ? 2 : 1;
+      return allHit ? { text: `You hit ${t} reps on every set at ${fmtW(topW)} kg. Try ${fmtW(topW + step)} kg.`, w: topW + step, r: t }
+        : { text: `Stay at ${fmtW(topW)} kg and aim for ${t} reps on every set.`, w: topW, r: t };
+    }
+    const best = Math.max(...last.map(s => s.r));
+    return allHit ? { text: `Last time ${best} reps. Aim for ${best + 1} on each set.`, w: 0, r: best + 1 } : { text: `Aim to match ${t} reps on every set.`, w: 0, r: t };
+  }
+
+  /* ---------- Views ---------- */
+  function mount(v, mode) { root = v; ui.mode = mode || ui.mode; draw(); }
+  function draw() { if (!root?.isConnected) return; if (ui.mode === 'progress') drawProgress(); else drawWorkouts(); }
+
+  function drawWorkouts() {
+    const out = [];
+    if (ui.log) { out.push(logger()); root.replaceChildren(...out); return; }
+    if (ui.build) { out.push(builder()); root.replaceChildren(...out); return; }
+    out.push(el('div', { class: 'title-row' }, el('div', { class: 'panel', style: 'gap:2px' }, el('p', { class: 'eyebrow', text: 'Log & history' }), el('h2', { text: 'Your sessions' })),
+      el('div', { class: 'row' },
+        el('button', { class: 'btn', type: 'button', text: 'Log a one-off session', onclick: () => startLog({ title: 'Workout', exercises: [{ name: '', target: '', sets: [{ w: '', r: '' }] }] }) }))));
+    if (!S.sessions.length) out.push(el('div', { class: 'empty' }, el('h3', { text: 'No sessions logged yet' }), el('p', { text: 'Open My plan and press Log on the day you’re training. Weights fill in from your last session, and your progress and PBs build up from there.' })));
+    const recent = [...S.sessions].sort((a, b) => String(b.date).localeCompare(String(a.date)) || byNew(a, b)).slice(0, 12);
+    if (recent.length) out.push(el('p', { class: 'eyebrow', text: 'Recent sessions' }), el('ul', { class: 'cards' }, recent.map(s => el('li', {}, el('details', { class: 'entry' },
+      el('summary', { class: 'entry-sum' }, el('span', { class: 'ed', text: niceDate(s.date) }), el('span', { class: 'ew', text: s.title || 'Workout' }), el('span', { class: 'occ', text: plural((s.entries || []).length, 'exercise') }), s.pbs?.length ? el('span', { class: 'pb', text: `${s.pbs.length} PB` }) : null),
+      el('div', { class: 'entry-body' },
+        el('ul', { class: 'hist' }, (s.entries || []).map(e => el('li', {}, el('span', { class: 'd', text: e.name }), el('span', { text: setStr(e.sets || []) })))),
+        s.notes ? el('p', { class: 'went', text: s.notes }) : null,
+        el('div', { class: 'row', style: 'justify-content:flex-end' }, armBtn('Delete session', 'Confirm delete', async () => { try { await db.doc('sessions/' + s.id).delete(); toast('Session deleted'); } catch (e) { toast(writeError(e)); } }))))))));
+    root.replaceChildren(...out);
+  }
+
+  function builder() {
+    const b = ui.build;
+    const name = el('input', { id: 'wkName', placeholder: 'Monday upper body', value: b.name });
+    name.addEventListener('input', () => b.name = name.value);
+    const rows = el('div', { class: 'panel', style: 'gap:8px' });
+    const drawRows = () => rows.replaceChildren(...b.exercises.map((e, i) => {
+      const f = (k, lbl, attrs) => { const inp = el('input', { id: `wb${k}${i}`, value: e[k] ?? '', ...attrs }); inp.addEventListener('input', () => e[k] = inp.value); return el('div', { class: 'field' }, el('label', { for: `wb${k}${i}`, text: lbl }), inp); };
+      return el('div', { class: 'build-row' }, f('name', `Exercise ${i + 1}`, { list: 'exNames', placeholder: 'Dumbbell bench press' }), f('sets', 'Sets', { inputmode: 'numeric' }), f('reps', 'Reps', { placeholder: '8-12' }), f('weight', 'Start kg', { inputmode: 'decimal', placeholder: 'optional' }),
+        el('button', { class: 'btn ghost', type: 'button', text: 'Remove', 'aria-label': `Remove exercise ${i + 1}`, disabled: b.exercises.length === 1, onclick: () => { b.exercises.splice(i, 1); drawRows(); } }));
+    }));
+    drawRows();
+    const save = async () => {
+      const exercises = b.exercises.map(e => ({ name: String(e.name || '').trim(), sets: Math.max(1, Math.min(20, parseInt(e.sets) || 3)), reps: String(e.reps || '').trim() || '10', weight: num(e.weight) || '' })).filter(e => e.name);
+      if (!b.name.trim()) { name.focus(); toast('Give the workout a name'); return; }
+      if (!exercises.length) { toast('Add at least one exercise'); return; }
+      try {
+        if (b.id) await db.doc('workouts/' + b.id).update({ name: b.name.trim(), exercises, updatedAt: Date.now() });
+        else await db.collection('workouts').doc().set({ name: b.name.trim(), exercises, createdAt: Date.now() });
+        ui.build = null; toast('Workout saved'); draw();
+      } catch (e) { toast(writeError(e)); }
+    };
+    return el('div', { class: 'box' },
+      el('h3', { text: b.id ? 'Edit workout' : 'Build a workout' }),
+      el('div', { class: 'field' }, el('label', { for: 'wkName', text: 'Workout name' }), name),
+      rows,
+      el('div', { class: 'row', style: 'justify-content:space-between' },
+        el('button', { class: 'btn', type: 'button', text: '+ Add exercise', onclick: () => { b.exercises.push({ name: '', sets: 3, reps: '10', weight: '' }); drawRows(); rows.lastChild?.querySelector('input')?.focus(); } }),
+        el('div', { class: 'row' }, el('button', { class: 'btn ghost', type: 'button', text: 'Cancel', onclick: () => { ui.build = null; draw(); } }), el('button', { class: 'btn primary', type: 'button', text: 'Save workout', onclick: save }))));
+  }
+
+  /* ---------- Logging ---------- */
+  function prefill(name, target, n, startW) {
+    const s = suggestion(name, target);
+    const count = Math.max(1, n || 3);
+    if (s) return Array.from({ length: count }, () => ({ w: s.w ? fmtW(s.w) : '', r: s.r ? String(s.r) : '' }));
+    return Array.from({ length: count }, () => ({ w: startW ? fmtW(num(startW)) : '', r: String(repsTarget(target) || '') }));
+  }
+  function startFromWorkout(w) { startLog({ title: w.name, exercises: (w.exercises || []).map(e => ({ name: e.name, target: `${e.sets} × ${e.reps}`, sets: prefill(e.name, e.reps, e.sets, e.weight) })) }); }
+  function startFromPlan(day, planName) {
+    ui.mode = 'workouts';
+    startLog({ title: `${planName ? planName + ' — ' : ''}${day.label || ''}${day.focus ? ' ' + day.focus : ''}`.trim(), exercises: (day.exercises || []).map(e => { const rx = parseRx(e.prescription); return { name: e.name, target: e.prescription || '', guide: e.how ? { how: e.how, tip: e.tip } : null, sets: prefill(e.name, rx.reps, rx.sets, e.start) }; }) }, true);
+  }
+  function startLog(l, silent) { ui.log = { date: todayIso(), notes: '', ...l }; ui.build = null; if (!silent) { draw(); window.scrollTo({ top: 0 }); } }
+
+  function logger() {
+    const L = ui.log;
+    const date = el('input', { id: 'lgDate', type: 'date', value: L.date }); date.addEventListener('change', () => L.date = date.value || todayIso());
+    const title = el('input', { id: 'lgTitle', value: L.title }); title.addEventListener('input', () => L.title = title.value);
+    const notes = el('textarea', { id: 'lgNotes', rows: 2, placeholder: 'How it felt, anything to change next time…', value: L.notes }); notes.addEventListener('input', () => L.notes = notes.value);
+    const exWrap = el('div', { class: 'panel', style: 'gap:14px' });
+    const drawEx = () => exWrap.replaceChildren(...L.exercises.map((e, i) => {
+      const st = e.name ? statsFor(e.name) : null, sug = e.name ? suggestion(e.name, parseRx(e.target).reps || e.target) : null;
+      const nameIn = el('input', { id: `lgN${i}`, value: e.name, list: 'exNames', placeholder: 'Exercise name' });
+      nameIn.addEventListener('change', () => { e.name = nameIn.value.trim(); drawEx(); });
+      const sets = el('div', { class: 'sets' }, el('span'), el('span', { class: 'hd', text: 'kg' }), el('span', { class: 'hd', text: 'Reps' }), el('span'),
+        e.sets.map((s, j) => {
+          const w = el('input', { id: `lgW${i}_${j}`, inputmode: 'decimal', value: s.w, placeholder: 'body', 'aria-label': `Set ${j + 1} weight in kg` });
+          const r = el('input', { id: `lgR${i}_${j}`, inputmode: 'numeric', value: s.r, 'aria-label': `Set ${j + 1} reps` });
+          w.addEventListener('input', () => s.w = w.value); r.addEventListener('input', () => s.r = r.value);
+          return [el('span', { class: 'sn', text: j + 1 }), w, r, el('button', { class: 'btn ghost', type: 'button', text: '×', 'aria-label': `Remove set ${j + 1}`, disabled: e.sets.length === 1, onclick: () => { e.sets.splice(j, 1); drawEx(); } })];
+        }));
+      return el('div', { class: 'log-ex' },
+        el('div', { class: 'log-ex-head' },
+          e.name ? el('span', { class: 'nm', text: e.name }) : el('div', { class: 'field', style: 'flex:1' }, el('label', { for: `lgN${i}`, text: 'Exercise' }), nameIn),
+          e.target ? el('span', { class: 'rx ref', text: `Target ${e.target}` }) : null,
+          el('button', { class: 'btn ghost', type: 'button', text: 'Remove exercise', onclick: () => { L.exercises.splice(i, 1); drawEx(); } })),
+        st ? el('p', { class: 'prev', style: 'margin:0' }, `Last (${niceDate(st.last.date)}): ${setStr(st.last.sets)}`, st.bestW ? [' · PB ', el('b', { text: `${fmtW(st.bestW.w)} kg × ${st.bestW.r}` })] : st.bestR ? [' · PB ', el('b', { text: `${st.bestR.r} reps` })] : null) : null,
+        sug ? el('p', { class: 'prev', style: 'margin:0' }, 'Next step: ', el('b', { text: sug.text })) : null,
+        e.name ? howTo(e.name, e.guide) : null,
+        sets,
+        el('div', { class: 'row' }, el('button', { class: 'btn ghost', type: 'button', text: '+ Add set', onclick: () => { const last = e.sets[e.sets.length - 1] || { w: '', r: '' }; e.sets.push({ w: last.w, r: last.r }); drawEx(); } })));
+    }));
+    drawEx();
+    const save = async () => {
+      const entries = L.exercises.map(e => ({ name: String(e.name || '').trim(), target: e.target || '', sets: e.sets.map(s => ({ w: num(s.w), r: num(s.r) })).filter(s => s.r > 0 || s.w > 0) })).filter(e => e.name && e.sets.length);
+      if (!entries.length) { toast('Fill in at least one set'); return; }
+      const pbs = [];
+      for (const e of entries) {
+        const st = statsFor(e.name);
+        const topW = Math.max(...e.sets.map(s => s.w)), topR = Math.max(...e.sets.map(s => s.r)), top1 = Math.max(...e.sets.map(s => e1rm(s.w, s.r)));
+        if (!st) continue;
+        if (topW > 0 && (!st.bestW || topW > st.bestW.w)) pbs.push(`${e.name} ${fmtW(topW)} kg`);
+        else if (topW === 0 && (!st.bestR || topR > st.bestR.r)) pbs.push(`${e.name} ${topR} reps`);
+        else if (top1 && st.best1 && top1 > st.best1.e + 0.01) pbs.push(`${e.name} best set yet`);
+      }
+      try {
+        await db.collection('sessions').doc().set({ date: L.date || todayIso(), title: String(L.title || 'Workout').trim(), notes: String(L.notes || '').trim(), entries, pbs, createdAt: Date.now() });
+        ui.log = null; toast(pbs.length ? `Saved. New PB: ${pbs.join(', ')}` : 'Session saved'); draw();
+      } catch (e) { toast(writeError(e)); }
+    };
+    return el('div', { class: 'box' },
+      el('div', { class: 'title-row' }, el('div', { class: 'panel', style: 'gap:2px' }, el('p', { class: 'eyebrow', text: 'Logging a session' }), el('h3', { text: L.title || 'Workout' })),
+        el('button', { class: 'btn ghost', type: 'button', text: 'Discard', onclick: () => { ui.log = null; draw(); } })),
+      el('div', { class: 'grid2' }, el('div', { class: 'field' }, el('label', { for: 'lgTitle', text: 'Session name' }), title), el('div', { class: 'field' }, el('label', { for: 'lgDate', text: 'Date' }), date)),
+      el('p', { class: 'hint', text: 'Weights are filled in from your last session with the next step suggested. Change anything to what you actually did. Leave kg blank for bodyweight.' }),
+      exWrap,
+      el('div', { class: 'row' }, el('button', { class: 'btn', type: 'button', text: '+ Add exercise', onclick: () => { L.exercises.push({ name: '', target: '', sets: [{ w: '', r: '' }] }); drawEx(); } })),
+      el('div', { class: 'field' }, el('label', { for: 'lgNotes', text: 'Notes' }), notes),
+      el('div', { class: 'row', style: 'justify-content:flex-end' }, el('button', { class: 'btn primary', type: 'button', text: 'Save session', onclick: save })));
+  }
+
+  /* ---------- Progress & PBs ---------- */
+  function drawProgress() {
+    const xs = allExercises();
+    if (!xs.length) { root.replaceChildren(el('div', { class: 'empty' }, el('h3', { text: 'No sessions logged yet' }), el('p', { text: 'Log a workout and each exercise appears here with its personal bests, a progress chart and the next step to aim for.' }))); return; }
+    if (!ui.sel || !xs.some(x => key(x.name) === key(ui.sel))) ui.sel = xs[0].name;
+    const table = el('table', { class: 'pb-table' },
+      el('thead', {}, el('tr', {}, ['Exercise', 'Heaviest', 'Most reps', 'Est. 1-rep max', 'Sessions', 'Last done'].map(h => el('th', { text: h })))),
+      el('tbody', {}, xs.map(x => el('tr', { class: key(x.name) === key(ui.sel) ? 'sel' : '', tabindex: 0, onclick: () => { ui.sel = x.name; drawProgress(); }, onkeydown: e => { if (e.key === 'Enter') { ui.sel = x.name; drawProgress(); } } },
+        el('td', { class: 'nm', text: x.name }),
+        el('td', { text: x.bestW ? `${fmtW(x.bestW.w)} kg × ${x.bestW.r}` : '—' }),
+        el('td', { text: x.bestR ? `${x.bestR.r}${x.bestR.w ? ' @ ' + fmtW(x.bestR.w) + ' kg' : ''}` : '—' }),
+        el('td', { text: x.best1 ? `${fmtW(Math.round(x.best1.e * 2) / 2)} kg` : '—' }),
+        el('td', { text: x.h.length }),
+        el('td', { text: niceDate(x.last.date) })))));
+    const x = xs.find(x => key(x.name) === key(ui.sel));
+    const weighted = !!x.bestW;
+    const pts = x.h.map(e => ({ date: e.date, y: weighted ? Math.max(...e.sets.map(s => num(s.w))) : Math.max(...e.sets.map(s => num(s.r))) }));
+    const sug = suggestion(x.name, '');
+    root.replaceChildren(el('div', { class: 'panel', style: 'gap:22px' },
+      el('div', { class: 'panel', style: 'gap:10px' }, el('p', { class: 'eyebrow', text: 'Personal bests' }), el('div', { class: 'scroll-x box', style: 'padding:6px' }, table)),
+      el('div', { class: 'box' },
+        el('div', { class: 'title-row' }, el('div', { class: 'panel', style: 'gap:2px' }, el('p', { class: 'eyebrow', text: 'Progression' }), el('h3', { text: x.name })),
+          el('div', { class: 'summary-bar' },
+            x.bestW ? el('div', { class: 'panel', style: 'gap:0' }, el('p', { class: 'eyebrow', text: 'PB' }), el('span', { class: 'big', style: 'font-size:1.6rem', text: `${fmtW(x.bestW.w)} kg` }), el('span', { class: 'hint', text: `× ${x.bestW.r} · ${niceDate(x.bestW.date)}` }))
+              : el('div', { class: 'panel', style: 'gap:0' }, el('p', { class: 'eyebrow', text: 'PB' }), el('span', { class: 'big', style: 'font-size:1.6rem', text: `${x.bestR.r} reps` }), el('span', { class: 'hint', text: niceDate(x.bestR.date) })))),
+        sug ? el('p', { class: 'suggest' }, 'Next time: ', el('b', { text: sug.text })) : null,
+        howTo(x.name),
+        pts.length > 1 ? chart(pts, weighted ? 'kg' : 'reps') : el('p', { class: 'hint', text: 'Log this exercise again to see a progress line.' }),
+        el('ul', { class: 'hist' }, [...x.h].reverse().map(e => el('li', {}, el('span', { class: 'd', text: niceDate(e.date) }), el('span', { text: setStr(e.sets) })))))));
+  }
+  function niceTicks(min, max, n = 4) {
+    if (min === max) { min = Math.max(0, min - 1); max = max + 1; }
+    const span = max - min, raw = span / n, mag = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / mag;
+    const step = (f < 1.5 ? 1 : f < 3 ? 2 : f < 7 ? 5 : 10) * mag;
+    const lo = Math.floor(min / step) * step, hi = Math.ceil(max / step) * step, t = [];
+    for (let v = lo; v <= hi + step / 2; v += step) t.push(Math.round(v * 100) / 100);
+    return t;
+  }
+  function chart(pts, unit) {
+    const W = 640, H = 230, L = 46, R = 16, T = 16, B = 34;
+    const ys = pts.map(p => p.y), ticks = niceTicks(Math.min(...ys), Math.max(...ys));
+    const y0 = ticks[0], y1 = ticks[ticks.length - 1];
+    const t0 = fromIso(pts[0].date).getTime(), t1 = fromIso(pts[pts.length - 1].date).getTime();
+    const X = d => L + (t1 === t0 ? (W - L - R) / 2 : (fromIso(d).getTime() - t0) / (t1 - t0) * (W - L - R));
+    const Y = v => T + (1 - (v - y0) / (y1 - y0 || 1)) * (H - T - B);
+    const NS = 'http://www.w3.org/2000/svg', s = (tag, a, txt) => { const n = document.createElementNS(NS, tag); for (const k in a) n.setAttribute(k, a[k]); if (txt != null) n.textContent = txt; return n; };
+    const svg = s('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': `Best ${unit} per session over time` });
+    for (const tv of ticks) { svg.append(s('line', { x1: L, x2: W - R, y1: Y(tv), y2: Y(tv), stroke: 'var(--rule)', 'stroke-width': 1 })); svg.append(s('text', { x: L - 8, y: Y(tv) + 4, 'text-anchor': 'end', 'font-size': 11, fill: 'var(--muted)', 'font-family': 'IBM Plex Mono, monospace' }, `${tv}`)); }
+    svg.append(s('text', { x: 4, y: T - 4, 'font-size': 10, fill: 'var(--muted)', 'font-family': 'IBM Plex Mono, monospace' }, unit));
+    const labIdx = [...new Set([0, Math.floor((pts.length - 1) / 2), pts.length - 1])];
+    for (const i of labIdx) { const d = fromIso(pts[i].date); svg.append(s('text', { x: X(pts[i].date), y: H - 10, 'text-anchor': i === 0 ? 'start' : i === pts.length - 1 ? 'end' : 'middle', 'font-size': 11, fill: 'var(--muted)', 'font-family': 'IBM Plex Mono, monospace' }, `${d.getDate()} ${MONTHS[d.getMonth()]}`)); }
+    const path = pts.map((p, i) => `${i ? 'L' : 'M'}${X(p.date).toFixed(1)},${Y(p.y).toFixed(1)}`).join(' ');
+    svg.append(s('path', { d: `${path} L${X(pts[pts.length - 1].date).toFixed(1)},${Y(y0)} L${X(pts[0].date).toFixed(1)},${Y(y0)} Z`, fill: 'var(--stamp-soft)', opacity: .7 }));
+    svg.append(s('path', { d: path, fill: 'none', stroke: 'var(--stamp)', 'stroke-width': 2, 'stroke-linejoin': 'round' }));
+    const maxY = Math.max(...ys);
+    pts.forEach((p, i) => { const isPb = p.y === maxY && ys.indexOf(maxY) === i; const c = s('circle', { cx: X(p.date), cy: Y(p.y), r: isPb || i === pts.length - 1 ? 5 : 3, fill: isPb ? 'var(--good)' : 'var(--stamp)', stroke: 'var(--card)', 'stroke-width': 1.5 }); c.append(s('title', {}, `${niceDate(p.date)}: ${p.y} ${unit}`)); svg.append(c); });
+    return el('div', { class: 'chart' }, svg);
+  }
+
+  function update() {
+    if (!root?.isConnected) return;
+    const dl = $('exNames'); if (dl) { const names = new Set(); S.workouts.forEach(w => (w.exercises || []).forEach(e => names.add(e.name))); S.sessions.forEach(s => (s.entries || []).forEach(e => names.add(e.name))); dl.replaceChildren(...[...names].sort().map(n => el('option', { value: n }))); }
+    if (ui.log || ui.build) return; // don't wipe a session being logged
+    draw();
+  }
+  return { mount, update, startFromPlan };
+}
+
+function Fitness() {
+  const plans = MyPlan(), train = Training();
+  let root, seg, slot, view = 'plans';
+  try { const v = localStorage.getItem('daybook.fit'); if (['plans', 'workouts', 'progress'].includes(v)) view = v; } catch (e) {}
+  function mount(v) {
+    root = v; slot = el('div', { class: 'panel' });
+    seg = el('div', { class: 'seg', role: 'group', 'aria-label': 'Fitness section' });
+    v.append(el('div', { class: 'panel', style: 'gap:22px' }, seg, slot));
+    show();
+  }
+  function show() {
+    try { localStorage.setItem('daybook.fit', view); } catch (e) {}
+    seg.replaceChildren(...[['plans', 'My plan'], ['workouts', 'Log & history'], ['progress', 'Progress & PBs']].map(([k, l]) => el('button', { type: 'button', 'aria-pressed': view === k ? 'true' : 'false', text: l, onclick: () => { view = k; show(); } })));
+    slot.replaceChildren();
+    if (view === 'plans') plans.mount(slot); else { train.mount(slot, view); train.update(); }
+  }
+  window.FIT_HOOK = { log: (day, planName) => { train.startFromPlan(day, planName); view = 'workouts'; show(); window.scrollTo({ top: 0 }); } };
+  return { mount, update: () => { if (!root?.isConnected) return; if (view === 'plans') plans.update(); else train.update(); } };
+}
+/* ================= On-device storage + GitHub backup ================= */
+const STORE_KEY = 'daybook.store.v1', SYNC_KEY = 'daybook.sync.v1', FILE_KEY = 'daybook.filebackup';
+const isObj = o => o && typeof o === 'object' && !Array.isArray(o);
+const deepMerge = (a, b) => { const o = { ...(a || {}) }; for (const [k, v] of Object.entries(b || {})) o[k] = isObj(v) && isObj(o[k]) ? deepMerge(o[k], v) : v; return o; };
+const clone = v => v == null ? v : JSON.parse(JSON.stringify(v));
+const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+
+const Store = (() => {
+  let docs = {};
+  try { docs = JSON.parse(localStorage.getItem(STORE_KEY) || '{}') || {}; } catch (e) { docs = {}; }
+  let lastT = 0;
+  const stamp = () => (lastT = Math.max(Date.now(), lastT + 1));
+  const subs = new Set();
+  const save = () => localStorage.setItem(STORE_KEY, JSON.stringify(docs));
+  const emit = paths => { for (const s of [...subs]) if (paths.some(p => s.match(p))) { try { s.fn(); } catch (e) { console.error(e); } } };
+  function write(path, data) {
+    const prev = docs[path];
+    docs[path] = { d: data, t: stamp() };
+    try { save(); } catch (e) { if (prev) docs[path] = prev; else delete docs[path]; throw { code: 'quota_exceeded' }; }
+    emit([path]); Sync.soon();
+  }
+  const get = path => docs[path]?.d ?? null;
+  const list = c => Object.entries(docs).filter(([p, v]) => v.d != null && p.startsWith(c + '/') && !p.slice(c.length + 1).includes('/')).map(([p, v]) => [p.slice(c.length + 1), v.d]);
+  function merge(other) {
+    const changed = [];
+    for (const [p, v] of Object.entries(other || {})) {
+      if (!v || typeof v.t !== 'number') continue;
+      const m = docs[p];
+      if (!m || v.t > m.t) { docs[p] = { d: v.d ?? null, t: v.t }; changed.push(p); }
+      lastT = Math.max(lastT, v.t);
+    }
+    if (changed.length) { try { save(); } catch (e) {} emit(changed); }
+    return changed.length;
+  }
+  const dump = () => clone(docs);
+  const count = () => Object.values(docs).filter(v => v.d != null).length;
+  return { write, get, list, merge, dump, count, subs };
+})();
+
+const snapDoc = (id, data) => ({ id, exists: data != null, data: () => data == null ? undefined : clone(data) });
+function docRef(path) {
+  const id = path.split('/').pop();
+  return {
+    id, path,
+    async get() { return snapDoc(id, Store.get(path)); },
+    async set(data) { Store.write(path, clone(data)); },
+    async update(data) { const cur = Store.get(path); if (cur == null) throw { code: 'not_found' }; Store.write(path, deepMerge(cur, clone(data))); },
+    async delete() { if (Store.get(path) != null) Store.write(path, null); },
+    onSnapshot(cb) { const s = { match: p => p === path, fn: () => cb(snapDoc(id, Store.get(path))) }; Store.subs.add(s); setTimeout(s.fn, 0); return () => Store.subs.delete(s); }
+  };
+}
+const localDb = {
+  doc: path => docRef(path),
+  collection: c => ({
+    doc: (id = newId()) => docRef(c + '/' + id),
+    onSnapshot(cb) {
+      const s = { match: p => p.startsWith(c + '/') && !p.slice(c.length + 1).includes('/'), fn: () => cb({ docs: Store.list(c).map(([id, d]) => snapDoc(id, d)) }) };
+      Store.subs.add(s); setTimeout(s.fn, 0); return () => Store.subs.delete(s);
+    }
+  })
+};
+
+const b64enc = str => { const b = new TextEncoder().encode(str); let s = ''; for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000)); return btoa(s); };
+const b64dec = b64 => new TextDecoder().decode(Uint8Array.from(atob(b64.replace(/\s/g, '')), c => c.charCodeAt(0)));
+const sameDocs = (a, b) => { const ka = Object.keys(a), kb = Object.keys(b || {}); if (ka.length !== kb.length) return false; return ka.every(k => b[k] && b[k].t === a[k].t); };
+const ago = t => { if (!t) return 'never'; const s = Math.round((Date.now() - t) / 1000); if (s < 60) return 'just now'; const m = Math.round(s / 60); if (m < 60) return `${m} min ago`; const h = Math.round(m / 60); if (h < 36) return `${h} hr ago`; return `${Math.round(h / 24)} days ago`; };
+
+const Sync = (() => {
+  let cfg = {};
+  try { cfg = JSON.parse(localStorage.getItem(SYNC_KEY) || '{}') || {}; } catch (e) {}
+  const FILE = 'daybook.json';
+  let timer = null, busy = false, again = false;
+  const status = { state: cfg.token ? 'idle' : 'off', msg: '', at: cfg.lastSync || 0 };
+  const listeners = new Set();
+  const tell = () => listeners.forEach(f => { try { f(); } catch (e) {} });
+  const saveCfg = () => { try { localStorage.setItem(SYNC_KEY, JSON.stringify(cfg)); } catch (e) {} };
+  const headers = () => ({ Authorization: 'Bearer ' + cfg.token, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' });
+  const url = p => `https://api.github.com/repos/${cfg.repo}${p}`;
+  async function gh(p, opt = {}) {
+    const r = await fetch(url(p), { ...opt, cache: 'no-store', headers: { ...headers(), ...(opt.headers || {}) } });
+    return r;
+  }
+  const explain = r => r.status === 401 ? 'GitHub didn’t accept the backup key. It may have expired — make a new one and paste it in.'
+    : r.status === 403 ? 'The backup key can’t write to that repository. Check it has Contents: Read and write.'
+    : r.status === 404 ? 'Couldn’t find that backup repository. Check its name, and that the key covers it.'
+    : `GitHub said ${r.status}.`;
+  async function pull() {
+    const r = await gh(`/contents/${FILE}`);
+    if (r.status === 404) {
+      const repo = await gh('');
+      if (!repo.ok) throw new Error(explain(repo));
+      return { sha: null, docs: {} };
+    }
+    if (!r.ok) throw new Error(explain(r));
+    const j = await r.json();
+    let text = j.content ? b64dec(j.content) : '';
+    if (!text && j.size > 0) { const b = await gh(`/git/blobs/${j.sha}`); if (!b.ok) throw new Error(explain(b)); text = b64dec((await b.json()).content); }
+    let data = {}; try { data = JSON.parse(text || '{}'); } catch (e) {}
+    return { sha: j.sha, docs: data.docs || {} };
+  }
+  async function run() {
+    if (!cfg.token || !cfg.repo) return;
+    if (!navigator.onLine) { status.state = 'offline'; tell(); return; }
+    if (busy) { again = true; return; }
+    busy = true; status.state = 'syncing'; tell();
+    try {
+      for (let attempt = 0; ; attempt++) {
+        const remote = await pull();
+        Store.merge(remote.docs);
+        const local = Store.dump();
+        if (remote.sha && sameDocs(local, remote.docs)) break;
+        const body = { message: `Daybook backup ${new Date().toISOString()}`, content: b64enc(JSON.stringify({ app: 'daybook', version: 1, savedAt: Date.now(), docs: local })) };
+        if (remote.sha) body.sha = remote.sha;
+        const put = await gh(`/contents/${FILE}`, { method: 'PUT', body: JSON.stringify(body), headers: { 'Content-Type': 'application/json' } });
+        if (put.ok) break;
+        if ((put.status === 409 || put.status === 422) && attempt < 3) continue;
+        throw new Error(explain(put));
+      }
+      status.state = 'ok'; status.msg = ''; status.at = cfg.lastSync = Date.now(); saveCfg();
+    } catch (e) {
+      status.state = navigator.onLine ? 'error' : 'offline'; status.msg = e?.message || 'Backup failed.';
+    } finally {
+      busy = false; tell();
+      if (again) { again = false; soon(); }
+    }
+  }
+  function soon(ms = 1500) { if (!cfg.token) return; clearTimeout(timer); timer = setTimeout(run, ms); }
+  async function connect(repo, token) {
+    const old = cfg; cfg = { ...cfg, repo: repo.trim().replace(/^https?:\/\/github\.com\//, '').replace(/\/+$/, ''), token: token.trim() };
+    const r = await gh('');
+    if (!r.ok) { const msg = explain(r); cfg = old; throw new Error(msg); }
+    saveCfg(); status.state = 'idle'; tell(); await run();
+    if (status.state === 'error') throw new Error(status.msg);
+  }
+  function disconnect() { cfg = { repo: cfg.repo }; saveCfg(); status.state = 'off'; status.msg = ''; tell(); }
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') soon(300); });
+  window.addEventListener('online', () => soon(300));
+  setInterval(() => { if (document.visibilityState === 'visible') soon(0); }, 5 * 60 * 1000);
+  return { run, soon, connect, disconnect, status, listeners, get cfg() { return { repo: cfg.repo || '', connected: !!cfg.token }; } };
+})();
+
+function downloadBackup() {
+  const blob = new Blob([JSON.stringify({ app: 'daybook', version: 1, savedAt: Date.now(), docs: Store.dump() }, null, 1)], { type: 'application/json' });
+  const a = el('a', { href: URL.createObjectURL(blob), download: `daybook-backup-${todayIso()}.json` });
+  document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  try { localStorage.setItem(FILE_KEY, String(Date.now())); } catch (e) {}
+}
+async function restoreBackup(file) {
+  const j = JSON.parse(await file.text());
+  if (!j || j.app !== 'daybook' || !j.docs) throw new Error('That file isn’t a Daybook backup.');
+  return Store.merge(j.docs);
+}
+
+function Backup() {
+  let root;
+  const defaultRepo = () => { const h = location.hostname; return h.endsWith('.github.io') ? h.split('.')[0] + '/daybook-data' : ''; };
+  function mount(v) { root = el('div', { class: 'panel', style: 'max-width:640px' }); v.append(root); draw(); }
+  function draw() {
+    if (!root || !root.isConnected) return;
+    const st = Sync.status, cfg = Sync.cfg;
+    const line = !cfg.connected ? 'Automatic backup is off.'
+      : st.state === 'syncing' ? 'Backing up…'
+      : st.state === 'error' ? st.msg
+      : st.state === 'offline' ? `You’re offline. Changes will back up when you’re back online. Last backup ${ago(st.at)}.`
+      : `Backed up to GitHub ${ago(st.at)}. Every change backs up automatically.`;
+    const repo = el('input', { type: 'text', value: cfg.repo || defaultRepo(), placeholder: 'yourname/daybook-data', autocomplete: 'off', autocapitalize: 'off', spellcheck: 'false' });
+    const key = el('input', { type: 'password', placeholder: 'github_pat_…', autocomplete: 'off' });
+    const go = el('button', { class: 'btn primary', type: 'button', text: 'Turn on backup', onclick: async () => {
+      if (!repo.value.trim() || !key.value.trim()) { toast('Add the repository and the backup key'); return; }
+      go.disabled = true; go.textContent = 'Checking…';
+      try { await Sync.connect(repo.value, key.value); toast('Backup is on'); } catch (e) { toast(e.message); }
+      draw();
+    } });
+    const fileIn = el('input', { type: 'file', accept: 'application/json,.json', hidden: true, onchange: async () => {
+      const f = fileIn.files[0]; if (!f) return;
+      try { const n = await restoreBackup(f); toast(n ? `Restored ${n} entr${n === 1 ? 'y' : 'ies'}` : 'Nothing new in that backup'); } catch (e) { toast(e.message || 'Couldn’t read that file'); }
+      fileIn.value = '';
+    } });
+    let lastFile = 0; try { lastFile = +localStorage.getItem(FILE_KEY) || 0; } catch (e) {}
+    root.replaceChildren(...[
+      el('div', {}, el('p', { class: 'eyebrow', text: 'Backup' }), el('h2', { text: 'Keep your Daybook safe' })),
+      el('div', { class: 'empty', style: `border-style:solid;color:var(--ink);${cfg.connected && st.state === 'ok' ? 'background:var(--good-soft);border-color:var(--good-soft)' : ''}` },
+        el('h3', { text: cfg.connected ? (st.state === 'error' ? 'Backup needs attention' : 'Automatic backup is on') : 'Automatic backup is off' }),
+        el('p', { text: line }),
+        cfg.connected ? el('div', { class: 'row' },
+          el('button', { class: 'btn', type: 'button', text: 'Back up now', onclick: () => Sync.run() }),
+          el('button', { class: 'btn ghost', type: 'button', text: 'Turn off on this device', onclick: () => { Sync.disconnect(); toast('Automatic backup turned off on this device'); } })) : null),
+      cfg.connected ? null : el('div', { class: 'panel', style: 'gap:12px' },
+        el('p', { class: 'hint', text: 'Connect once on each device. Your entries are saved to your private GitHub repository after every change, and download onto a new phone as soon as you connect it.' }),
+        el('div', { class: 'field' }, el('label', { text: 'Backup repository' }), repo),
+        el('div', { class: 'field' }, el('label', { text: 'Backup key' }), key),
+        el('div', { class: 'row' }, go)),
+      el('div', { class: 'panel', style: 'gap:10px' },
+        el('h3', { text: 'Backup file' }),
+        el('p', { class: 'hint', text: `A spare copy you can keep anywhere. Last saved on this device: ${ago(lastFile)}.` }),
+        el('div', { class: 'row' },
+          el('button', { class: 'btn', type: 'button', text: 'Save a backup file', onclick: () => { downloadBackup(); draw(); } }),
+          el('button', { class: 'btn', type: 'button', text: 'Restore from a file', onclick: () => fileIn.click() }), fileIn)),
+      el('p', { class: 'hint', text: `${Store.count()} entries on this device.` })].filter(Boolean));
+  }
+  Sync.listeners.add(draw);
+  return { mount, update: draw };
+}
+
+/* ================= Boot ================= */
+const TABS = { reading: Reading(), hosting: Hosting(), fitness: Fitness(), backup: Backup() };
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => showTab(t.dataset.tab)));
+{ const d = new Date(); $('today').textContent = `${DOW_L[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`; }
+document.body.append(
+  el('datalist', { id: 'authors' }, el('option', { value: 'Me' })),
+  el('datalist', { id: 'guestNames' }),
+  el('datalist', { id: 'exNames' }),
+  el('datalist', { id: 'seriesList' }), el('datalist', { id: 'ministerList' }), el('datalist', { id: 'placeList' }), el('datalist', { id: 'meetTypes' }),
+  el('datalist', { id: 'occasions' }, ['Sunday lunch', 'Tea', 'Dinner', 'Lunch', 'Breakfast', 'Afternoon tea', 'Birthday', 'Christmas', 'Barbecue'].map(o => el('option', { value: o }))));
+
+let start = 'reading';
+const h = (location.hash || '').slice(1);
+if (TABS[h]) start = h; else { try { const t = localStorage.getItem('daybook.tab'); if (TABS[t]) start = t; } catch (e) {} }
+showTab(start, false);
+
+(async () => {
+  db = localDb;
+  const cols = ['sources', 'notes', 'meals', 'stays', 'workouts', 'sessions', 'guides', 'meetings'];
+  const need = [...cols, 'fitness'];
+  const settle = () => { if (!S.ready && need.every(k => S.got[k])) { S.ready = true; refreshAuthors(); showTab(S.tab, false); } else dataChanged(); };
+  const fail = () => { S.unavailable = true; showTab(S.tab, false); };
+  for (const c of cols)
+    db.collection(c).onSnapshot(snap => { S[c] = snap.docs.map(d => ({ id: d.id, ...d.data() })); S.got[c] = true; settle(); }, fail);
+  db.doc('settings/fitness').onSnapshot(snap => { const first = !S.got.fitness; S.fitness = snap.exists ? snap.data() : null; S.got.fitness = true; if (first) settle(); }, fail);
+  db.doc('settings/plan').onSnapshot(() => dataChanged());
+  Sync.soon(200);
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+})();
+})();
+</script>
+
+</body></html>

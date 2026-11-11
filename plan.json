@@ -1,0 +1,108 @@
+{
+  "name": "12-Week Posture & Physique Program",
+  "startDate": "2026-11-09",
+  "weeks": 12,
+  "summary": "4 days a week on an upper/lower split, so every muscle is trained twice. Each session takes about 60–75 minutes including the 10-minute warm-up.",
+  "schedule": [
+    { "dow": 1, "session": "Upper A", "focus": "Heavy bench, rows, overhead press" },
+    { "dow": 2, "session": "Lower A", "focus": "Squat-focused, plus core" },
+    { "dow": 3, "session": null, "focus": "Rest or squash — an easy run or squash is fine" },
+    { "dow": 4, "session": "Upper B", "focus": "Pull-ups, incline press, extra posture work" },
+    { "dow": 5, "session": null, "focus": "Rest" },
+    { "dow": 6, "session": "Lower B", "focus": "Deadlift and hip thrust, plus core" },
+    { "dow": 0, "session": null, "focus": "Rest — walk or easy run" }
+  ],
+  "missedDays": "If you can only train 3 days in a week, run the four sessions in order and carry on from where you stopped. Don't skip the lower days.",
+  "warmup": {
+    "title": "Posture warm-up",
+    "minutes": 10,
+    "intro": "Once before every workout, and on rest days too if you can. It works on rounded shoulders, a stiff upper back, tight hip flexors and a forward head.",
+    "items": [
+      { "name": "Dead hang", "prescription": "2 × 30–45 s", "notes": "From the pull-up bar. Lets your shoulders open up and builds grip." },
+      { "name": "Thoracic extension over the bench", "prescription": "1 × 10", "notes": "Upper back on the end of the bench, hands behind your head, lean back slowly." },
+      { "name": "Wall slides", "prescription": "2 × 10", "notes": "Keep your back, elbows and wrists against the wall as you slide your arms up." },
+      { "name": "Band pull-aparts", "prescription": "2 × 15–20", "notes": "Light band, shoulder-width grip, straight arms; squeeze your shoulder blades for 1 s. No band: incline-bench Y-raises, 2 × 12 at 2–4 kg." },
+      { "name": "Couch stretch", "prescription": "45 s per side", "notes": "For your hip flexors. Squeeze your glute on the stretching side." },
+      { "name": "Chin tucks", "prescription": "1 × 10, 3 s hold", "notes": "Pull your head straight back to make a double chin." },
+      { "name": "Glute bridge", "prescription": "1 × 15", "notes": "Gets your glutes working before lower days." }
+    ]
+  },
+  "workoutsIntro": "Main lifts use 6–10 reps, finishing every set with only 1–2 reps left in the tank. If your first set lands more than 2 reps above the top of the range, add weight. Rest 2–3 min between main lifts and 60–90 s between accessories.",
+  "days": [
+    {
+      "label": "Upper A", "day": "Monday",
+      "exercises": [
+        { "id": "1", "name": "Barbell bench press", "prescription": "4 × 6–8", "start": "57.5 kg" },
+        { "id": "2", "name": "Chest-supported dumbbell row (incline bench)", "prescription": "4 × 8–10", "start": "22 kg" },
+        { "id": "3", "name": "Standing barbell overhead press", "prescription": "3 × 6–8", "start": "30 kg" },
+        { "id": "4", "name": "Lat pulldown", "prescription": "3 × 8–10", "start": "45 kg" },
+        { "id": "5", "name": "Lateral raise", "prescription": "3 × 12–15", "start": "10 kg" },
+        { "id": "6a", "name": "Incline dumbbell curl", "prescription": "3 × 10–12", "start": "12 kg" },
+        { "id": "6b", "name": "Cable overhead triceps extension (straight bar)", "prescription": "3 × 10–12", "start": "10 kg" }
+      ]
+    },
+    {
+      "label": "Lower A", "day": "Tuesday",
+      "exercises": [
+        { "id": "1", "name": "Goblet box squat, pain-free depth only", "prescription": "4 × 6–8", "start": "20 kg dumbbell" },
+        { "id": "2", "name": "Romanian deadlift", "prescription": "3 × 8–10", "start": "65 kg" },
+        { "id": "3", "name": "Dumbbell Bulgarian split squat", "prescription": "3 × 8–10 per leg", "start": "19 kg" },
+        { "id": "4", "name": "Standing calf raise (dumbbell)", "prescription": "3 × 12–15", "start": "20 kg" },
+        { "id": "5", "name": "Dead bug", "prescription": "3 × 8 per side", "start": "bodyweight" },
+        { "id": "6", "name": "Side plank", "prescription": "3 × 30–45 s per side", "start": "bodyweight" }
+      ],
+      "note": "Squat note: the barbell back squat is out for now because it gives you sharp, warm, stinging pain on the right side of your pelvis. Get that checked by a GP or physio before squatting heavy again. Only use the goblet box squat if it's completely pain-free, with the box high enough that the pain doesn't start. If any lower-body exercise brings the pain back, drop it until you've been assessed. Once you're cleared, put the barbell squat back in, starting light."
+    },
+    {
+      "label": "Upper B", "day": "Thursday",
+      "exercises": [
+        { "id": "1", "name": "Pull-ups", "prescription": "4 × max reps (stop at 10, then add weight)", "start": "bodyweight" },
+        { "id": "2", "name": "Incline dumbbell press", "prescription": "4 × 8–10", "start": "22 kg" },
+        { "id": "3", "name": "Seated cable row", "prescription": "3 × 10–12", "start": "45 kg" },
+        { "id": "4", "name": "Seated dumbbell shoulder press", "prescription": "3 × 8–10", "start": "16 kg" },
+        { "id": "5", "name": "Cable fly or dumbbell fly", "prescription": "2 × 12–15", "start": "12 kg" },
+        { "id": "6", "name": "Rear-delt fly (dumbbell or cable)", "prescription": "3 × 15–20", "start": "10 kg" },
+        { "id": "7a", "name": "Hammer curl", "prescription": "3 × 8–10", "start": "20 kg" },
+        { "id": "7b", "name": "Dumbbell skullcrusher", "prescription": "3 × 10–12", "start": "10 kg" }
+      ]
+    },
+    {
+      "label": "Lower B", "day": "Saturday",
+      "exercises": [
+        { "id": "1", "name": "Barbell deadlift", "prescription": "3 × 5", "start": "90 kg" },
+        { "id": "2", "name": "Barbell hip thrust (bench)", "prescription": "3 × 8–10", "start": "60 kg" },
+        { "id": "3", "name": "Dumbbell walking lunge", "prescription": "3 × 10 per leg", "start": "16 kg" },
+        { "id": "4", "name": "Cable pull-through", "prescription": "3 × 12–15", "start": "25 kg" },
+        { "id": "5", "name": "Seated calf raise (dumbbell on knee)", "prescription": "3 × 15–20", "start": "20 kg" },
+        { "id": "6", "name": "Cable Pallof press", "prescription": "3 × 10 per side", "start": "10 kg" },
+        { "id": "7", "name": "Hanging knee raise", "prescription": "3 × 10–12", "start": "bodyweight" }
+      ]
+    }
+  ],
+  "supersetNote": "Exercises marked 6a/6b and 7a/7b are supersets: do one set of each back to back, then rest. Use the same weight for all sets of a lift.",
+  "progression": {
+    "rule": "Once you hit the top of the rep range on every set with good form, increase the weight next session.",
+    "items": [
+      ["Barbell lower-body lifts", "squat, deadlift, RDL, hip thrust: add 5 kg."],
+      ["Barbell upper-body lifts", "bench, overhead press: add 2.5 kg."],
+      ["Dumbbells and cables", "move up to the next weight, then build back up from the bottom of the rep range."],
+      ["Pull-ups", "once you can do 4 × 10, hold a dumbbell between your feet and drop back to 4 × 6."],
+      ["Stuck for 3 sessions on a lift?", "take 10% off that lift and build back up."]
+    ]
+  },
+  "phases": [
+    { "from": 1, "to": 5, "title": "Build", "text": "Use the starting weights and progress with the rule." },
+    { "from": 6, "to": 6, "title": "Deload", "text": "Same weights, half the sets. Clean up your technique." },
+    { "from": 7, "to": 11, "title": "Build", "text": "Keep progressing. Add one extra set of rows and rear-delt flyes each week." },
+    { "from": 12, "to": 12, "title": "Deload and retest", "text": "Half the sets in the first half of the week. At the end, test 5-rep sets on bench, deadlift and pull-ups." }
+  ],
+  "photos": "Take progress photos (front, side and back, same lighting) in week 1 and week 12.",
+  "recovery": [
+    ["Protein", "about 150–190 g a day (1.6–2.0 g per kg at 93 kg), spread over 3–4 meals."],
+    ["Calories", "about 300–500 kcal under maintenance, losing about 0.25–0.5 kg a week. If your lifts drop for 2 weeks in a row, eat a little more."],
+    ["Sleep", "7–9 hours. Your 5 am sessions only work if you're in bed early."],
+    ["Cardio", "keep squash and 1–2 easy runs a week. No hard runs within 24 hours before a Lower day."],
+    ["Tracking", "keep logging every set in Strava. Name each session after its day (e.g. \"Upper A\", \"Lower B\") so each week is easy to compare with the last."],
+    ["Pain", "back, neck or shoulder pain (not normal soreness) → stop that exercise and see a physio. General guidance, not a medical assessment."]
+  ]
+}
